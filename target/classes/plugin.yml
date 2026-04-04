@@ -1,0 +1,23 @@
+name: Madness
+version: 1.0
+main: fr.europixel.madness.MadnessPlugin
+author: zozoclem
+
+commands:
+  madness:
+    description: Commande principale de Madness
+    usage: /madness reload
+  setspawn:
+    description: Definit le spawn du lobby
+    usage: /setspawn
+  setarenaspawn:
+    description: Ajoute un spawn de l'arene
+    usage: /setarenaspawn
+
+permissions:
+  madness.reload:
+    description: Permet de recharger Madness
+    default: op
+  madness.admin:
+    description: Permet d'utiliser les commandes admin
+    default: op

@@ -1,0 +1,14 @@
+tnt:
+  power: -3.6
+  min-y: 1.0
+  recharge: 10
+
+jetpack:
+  y: 3.6
+  recharge: 60
+
+arena-spawns: {}
+
+blocks:
+  crack-start-after: 6
+  remove-after: 12

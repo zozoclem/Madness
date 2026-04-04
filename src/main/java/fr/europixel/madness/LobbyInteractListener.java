@@ -7,6 +7,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class LobbyInteractListener implements Listener {
 
@@ -30,12 +31,38 @@ public class LobbyInteractListener implements Listener {
             return;
         }
 
-        ItemStack item = player.getItemInHand();
-        if (item == null || item.getType() != Material.DIAMOND_AXE) {
+        ItemStack item = event.getItem();
+        if (item == null) {
             return;
         }
 
-        event.setCancelled(true);
-        plugin.getArenaManager().sendToArena(player);
+        if (isPlayItem(item)) {
+            event.setCancelled(true);
+            plugin.getArenaManager().sendToArena(player);
+            return;
+        }
+
+        if (isEditKitItem(item)) {
+            event.setCancelled(true);
+            EditKitMenu.open(plugin, player);
+            return;
+        }
+    }
+
+    private boolean isPlayItem(ItemStack item) {
+        return item.getType() == Material.DIAMOND_AXE && hasName(item, "§a§lJouer");
+    }
+
+    private boolean isEditKitItem(ItemStack item) {
+        return item.getType() == Material.BLAZE_ROD && hasName(item, "§e§lEditKit");
+    }
+
+    private boolean hasName(ItemStack item, String expected) {
+        if (!item.hasItemMeta()) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && meta.hasDisplayName() && expected.equals(meta.getDisplayName());
     }
 }

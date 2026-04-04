@@ -1,0 +1,32 @@
+title: "&6&lMADNESS"
+
+lobby:
+  lines:
+    - " "
+    - "&a&l%player%"
+    - "  &8❙ &7Mode: &aLobby"
+    - "  &8❙ &7Ping: &f%ping%ms"
+    - "&r "
+    - "  &8❙ &7Kills: &a%kills%"
+    - "  &8❙ &7Deaths: &c%deaths%"
+    - "  &8❙ &7Streak: &e%streak%"
+    - "&8 "
+    - " &8▪ &dmadness"
+
+arena:
+  lines:
+    - " "
+    - "&c&l%player%"
+    - "  &8❙ &7Mode: &cArena"
+    - "  &8❙ &7Ping: &f%ping%ms"
+    - "&r "
+    - "  &8❙ &7Kills: &a%kills%"
+    - "  &8❙ &7Deaths: &c%deaths%"
+    - "  &8❙ &7Streak: &e%streak%"
+    - "%cooldowns%"
+    - "&8 "
+    - " &8▪ &dmadness"
+
+  cooldown-header: " §8❙ §e§lCooldown"
+  tnt-line: "   &8➥ &7TNT: &f%tnt%s"
+  jetpack-line: "   &8➥ &7Jetpack: &f%jetpack%s"

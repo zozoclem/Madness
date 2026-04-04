@@ -20,14 +20,24 @@ public class KillListener implements Listener {
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
 
+        plugin.getPlayerStatsManager().addDeath(victim);
+
         if (killer == null) {
+            plugin.getSidebarManager().update(victim);
             return;
         }
 
+        plugin.getPlayerStatsManager().addKill(killer);
+
         healInstant(killer);
         giveGoldenApple(killer);
-        plugin.getRechargeManager().resetTntCooldown(killer);
+        plugin.getRechargeManager().resetTnt(killer);
+        plugin.getRechargeManager().resetJetpack(killer);
+
         ActionBarUtil.sendActionBar(killer, "§aVous avez tué §f" + victim.getName());
+
+        plugin.getSidebarManager().update(killer);
+        plugin.getSidebarManager().update(victim);
     }
 
     private void healInstant(Player killer) {

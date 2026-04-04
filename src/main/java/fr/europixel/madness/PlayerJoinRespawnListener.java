@@ -25,13 +25,19 @@ public class PlayerJoinRespawnListener implements Listener {
         plugin.getRechargeManager().clear(player);
         plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
         plugin.getLobbyManager().sendToLobby(player);
+        plugin.getPlayerStatsManager().loadPlayer(player);
+        plugin.getSidebarManager().create(player);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+
         event.setQuitMessage(null);
         plugin.getRechargeManager().clear(event.getPlayer());
         plugin.getPlayerModeManager().remove(event.getPlayer());
+        plugin.getPlayerStatsManager().unloadPlayer(player);
+        plugin.getSidebarManager().remove(player);
     }
 
     @EventHandler

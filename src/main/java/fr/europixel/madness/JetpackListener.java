@@ -45,7 +45,7 @@ public class JetpackListener implements Listener {
 
         player.setVelocity(v);
 
-        plugin.getRechargeManager().startJetpackRecharge(player);
+        plugin.getRechargeManager().startJetpackRecharge(player,60);
         player.updateInventory();
     }
 }

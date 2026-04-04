@@ -11,224 +11,266 @@ import java.util.UUID;
 public class ItemRechargeManager {
 
     private final MadnessPlugin plugin;
-    private final Map<UUID, RechargeData> tntRecharge;
-    private final Map<UUID, RechargeData> jetpackRecharge;
-    private final Map<UUID, BukkitTask> tntTasks;
-    private final Map<UUID, BukkitTask> jetpackTasks;
-    private final Map<UUID, BukkitTask> visualTasks;
+
+    private final Map<UUID, Long> tntCooldowns = new HashMap<UUID, Long>();
+    private final Map<UUID, Long> jetpackCooldowns = new HashMap<UUID, Long>();
+
+    private final Map<UUID, BukkitTask> tntTasks = new HashMap<UUID, BukkitTask>();
+    private final Map<UUID, BukkitTask> jetpackTasks = new HashMap<UUID, BukkitTask>();
+
+    private final Map<UUID, Integer> tntSlots = new HashMap<UUID, Integer>();
+    private final Map<UUID, Integer> jetpackSlots = new HashMap<UUID, Integer>();
 
     public ItemRechargeManager(MadnessPlugin plugin) {
         this.plugin = plugin;
-        this.tntRecharge = new HashMap<UUID, RechargeData>();
-        this.jetpackRecharge = new HashMap<UUID, RechargeData>();
-        this.tntTasks = new HashMap<UUID, BukkitTask>();
-        this.jetpackTasks = new HashMap<UUID, BukkitTask>();
-        this.visualTasks = new HashMap<UUID, BukkitTask>();
     }
 
-    public void startTntRecharge(final Player player) {
-        cancelTntTask(player);
-        cancelVisualTask(player);
+    public void startTntRecharge(final Player player, final int seconds) {
+        clearTnt(player);
 
-        int seconds = plugin.getConfig().getInt("tnt.recharge");
-        int slot = 1;
+        final UUID uuid = player.getUniqueId();
+        final int slot = player.getInventory().getHeldItemSlot();
+        final long end = System.currentTimeMillis() + (seconds * 1000L);
 
-        RechargeData data = new RechargeData(System.currentTimeMillis(), seconds, slot, RechargeType.TNT);
-        tntRecharge.put(player.getUniqueId(), data);
+        tntCooldowns.put(uuid, end);
+        tntSlots.put(uuid, slot);
 
-        player.getInventory().setItem(slot, CooldownItemFactory.createTntCooldownItem(seconds));
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("§cTNT en recharge", seconds));
         player.updateInventory();
-
-        startVisualUpdater(player, RechargeType.TNT);
 
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {
-                if (player != null && player.isOnline()) {
-                    player.getInventory().setItem(1, ItemFactory.createTntItem());
+                tntCooldowns.remove(uuid);
+                tntTasks.remove(uuid);
+
+                Integer savedSlot = tntSlots.remove(uuid);
+
+                if (player.isOnline() && savedSlot != null) {
+                    player.getInventory().setItem(savedSlot, ItemFactory.createTntItem());
                     player.updateInventory();
                 }
-                tntRecharge.remove(player.getUniqueId());
-                cancelVisualTask(player);
-                tntTasks.remove(player.getUniqueId());
             }
         }, seconds * 20L);
 
-        tntTasks.put(player.getUniqueId(), task);
+        tntTasks.put(uuid, task);
     }
 
-    public void startJetpackRecharge(final Player player) {
-        cancelJetpackTask(player);
-        cancelVisualTask(player);
+    public void startJetpackRecharge(final Player player, final int seconds) {
+        clearJetpack(player);
 
-        int seconds = plugin.getConfig().getInt("jetpack.recharge");
-        int slot = 2;
+        final UUID uuid = player.getUniqueId();
+        final int slot = player.getInventory().getHeldItemSlot();
+        final long end = System.currentTimeMillis() + (seconds * 1000L);
 
-        RechargeData data = new RechargeData(System.currentTimeMillis(), seconds, slot, RechargeType.JETPACK);
-        jetpackRecharge.put(player.getUniqueId(), data);
+        jetpackCooldowns.put(uuid, end);
+        jetpackSlots.put(uuid, slot);
 
-        player.getInventory().setItem(slot, CooldownItemFactory.createJetpackCooldownItem(seconds));
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("§cJetpack en recharge", seconds));
         player.updateInventory();
-
-        startVisualUpdater(player, RechargeType.JETPACK);
 
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {
-                if (player != null && player.isOnline()) {
-                    player.getInventory().setItem(2, ItemFactory.createJetpackItem());
+                jetpackCooldowns.remove(uuid);
+                jetpackTasks.remove(uuid);
+
+                Integer savedSlot = jetpackSlots.remove(uuid);
+
+                if (player.isOnline() && savedSlot != null) {
+                    player.getInventory().setItem(savedSlot, ItemFactory.createJetpackItem());
                     player.updateInventory();
                 }
-                jetpackRecharge.remove(player.getUniqueId());
-                cancelVisualTask(player);
-                jetpackTasks.remove(player.getUniqueId());
             }
         }, seconds * 20L);
 
-        jetpackTasks.put(player.getUniqueId(), task);
+        jetpackTasks.put(uuid, task);
     }
 
-    public void resetTntCooldown(Player player) {
-        cancelTntTask(player);
-        cancelVisualTask(player);
-        tntRecharge.remove(player.getUniqueId());
+    public boolean isTntOnCooldown(Player player) {
+        Long end = tntCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return false;
+        }
 
-        if (player != null && player.isOnline()) {
-            player.getInventory().setItem(1, ItemFactory.createTntItem());
+        if (end <= System.currentTimeMillis()) {
+            tntCooldowns.remove(player.getUniqueId());
+            tntSlots.remove(player.getUniqueId());
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isJetpackOnCooldown(Player player) {
+        Long end = jetpackCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return false;
+        }
+
+        if (end <= System.currentTimeMillis()) {
+            jetpackCooldowns.remove(player.getUniqueId());
+            jetpackSlots.remove(player.getUniqueId());
+            return false;
+        }
+
+        return true;
+    }
+
+    public int getRemainingTntSeconds(Player player) {
+        Long end = tntCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return 0;
+        }
+
+        long remaining = end - System.currentTimeMillis();
+        if (remaining <= 0L) {
+            return 0;
+        }
+
+        return (int) Math.ceil(remaining / 1000.0D);
+    }
+
+    public int getRemainingJetpackSeconds(Player player) {
+        Long end = jetpackCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return 0;
+        }
+
+        long remaining = end - System.currentTimeMillis();
+        if (remaining <= 0L) {
+            return 0;
+        }
+
+        return (int) Math.ceil(remaining / 1000.0D);
+    }
+
+    public float getTntProgress(Player player, int maxSeconds) {
+        Long end = tntCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return 0.0F;
+        }
+
+        long remaining = end - System.currentTimeMillis();
+        if (remaining <= 0L) {
+            return 0.0F;
+        }
+
+        float progress = (float) remaining / (float) (maxSeconds * 1000L);
+
+        if (progress < 0.0F) {
+            progress = 0.0F;
+        }
+
+        if (progress > 1.0F) {
+            progress = 1.0F;
+        }
+
+        return progress;
+    }
+
+    public float getJetpackProgress(Player player, int maxSeconds) {
+        Long end = jetpackCooldowns.get(player.getUniqueId());
+        if (end == null) {
+            return 0.0F;
+        }
+
+        long remaining = end - System.currentTimeMillis();
+        if (remaining <= 0L) {
+            return 0.0F;
+        }
+
+        float progress = (float) remaining / (float) (maxSeconds * 1000L);
+
+        if (progress < 0.0F) {
+            progress = 0.0F;
+        }
+
+        if (progress > 1.0F) {
+            progress = 1.0F;
+        }
+
+        return progress;
+    }
+
+    public void resetTnt(Player player) {
+        UUID uuid = player.getUniqueId();
+        Integer slot = tntSlots.get(uuid);
+
+        clearTnt(player);
+
+        if (slot == null) {
+            slot = findTntSlotInHotbar(player);
+        }
+
+        if (slot != null) {
+            player.getInventory().setItem(slot, ItemFactory.createTntItem());
             player.updateInventory();
         }
     }
 
-    private void startVisualUpdater(final Player player, final RechargeType type) {
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
-            @Override
-            public void run() {
-                if (player == null || !player.isOnline()) {
-                    return;
-                }
+    public void resetJetpack(Player player) {
+        UUID uuid = player.getUniqueId();
+        Integer slot = jetpackSlots.get(uuid);
 
-                RechargeData data = getRecharge(player, type);
-                if (data == null) {
-                    return;
-                }
+        clearJetpack(player);
 
-                int remaining = data.getRemainingSeconds();
-
-                if (type == RechargeType.TNT) {
-                    player.getInventory().setItem(data.getSlot(), CooldownItemFactory.createTntCooldownItem(remaining));
-                } else {
-                    player.getInventory().setItem(data.getSlot(), CooldownItemFactory.createJetpackCooldownItem(remaining));
-                }
-
-                player.updateInventory();
-
-                if (remaining <= 0) {
-                    cancelVisualTask(player);
-                }
-            }
-        }, 0L, 20L);
-
-        visualTasks.put(player.getUniqueId(), task);
-    }
-
-    private void cancelTntTask(Player player) {
-        BukkitTask task = tntTasks.remove(player.getUniqueId());
-        if (task != null) {
-            task.cancel();
-        }
-    }
-
-    private void cancelJetpackTask(Player player) {
-        BukkitTask task = jetpackTasks.remove(player.getUniqueId());
-        if (task != null) {
-            task.cancel();
-        }
-    }
-
-    private void cancelVisualTask(Player player) {
-        BukkitTask task = visualTasks.remove(player.getUniqueId());
-        if (task != null) {
-            task.cancel();
-        }
-    }
-
-    public RechargeData getHeldRecharge(Player player) {
-        RechargeData tnt = tntRecharge.get(player.getUniqueId());
-        RechargeData jetpack = jetpackRecharge.get(player.getUniqueId());
-
-        int heldSlot = player.getInventory().getHeldItemSlot();
-
-        if (tnt != null && tnt.getSlot() == heldSlot) {
-            return tnt;
+        if (slot == null) {
+            slot = findJetpackSlotInHotbar(player);
         }
 
-        if (jetpack != null && jetpack.getSlot() == heldSlot) {
-            return jetpack;
+        if (slot != null) {
+            player.getInventory().setItem(slot, ItemFactory.createJetpackItem());
+            player.updateInventory();
         }
-
-        return null;
-    }
-
-    public RechargeData getRecharge(Player player, RechargeType type) {
-        if (type == RechargeType.TNT) {
-            return tntRecharge.get(player.getUniqueId());
-        }
-        return jetpackRecharge.get(player.getUniqueId());
-    }
-
-    public boolean isTntOnCooldown(Player player) {
-        return tntRecharge.containsKey(player.getUniqueId());
-    }
-
-    public boolean isJetpackOnCooldown(Player player) {
-        return jetpackRecharge.containsKey(player.getUniqueId());
     }
 
     public void clear(Player player) {
-        cancelTntTask(player);
-        cancelJetpackTask(player);
-        cancelVisualTask(player);
-        tntRecharge.remove(player.getUniqueId());
-        jetpackRecharge.remove(player.getUniqueId());
+        clearTnt(player);
+        clearJetpack(player);
     }
 
-    public static class RechargeData {
-        private final long startMillis;
-        private final int durationSeconds;
-        private final int slot;
-        private final RechargeType type;
+    private void clearTnt(Player player) {
+        UUID uuid = player.getUniqueId();
 
-        public RechargeData(long startMillis, int durationSeconds, int slot, RechargeType type) {
-            this.startMillis = startMillis;
-            this.durationSeconds = durationSeconds;
-            this.slot = slot;
-            this.type = type;
-        }
+        tntCooldowns.remove(uuid);
+        tntSlots.remove(uuid);
 
-        public int getSlot() {
-            return slot;
-        }
-
-        public RechargeType getType() {
-            return type;
-        }
-
-        public int getRemainingSeconds() {
-            long elapsed = (System.currentTimeMillis() - startMillis) / 1000L;
-            int remaining = durationSeconds - (int) elapsed;
-            return Math.max(remaining, 0);
-        }
-
-        public float getProgress() {
-            long elapsedMillis = System.currentTimeMillis() - startMillis;
-            double progress = (double) elapsedMillis / (durationSeconds * 1000.0D);
-            progress = Math.max(0.0D, Math.min(progress, 1.0D));
-            return (float) progress;
+        BukkitTask task = tntTasks.remove(uuid);
+        if (task != null) {
+            task.cancel();
         }
     }
 
-    public enum RechargeType {
-        TNT,
-        JETPACK
+    private void clearJetpack(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        jetpackCooldowns.remove(uuid);
+        jetpackSlots.remove(uuid);
+
+        BukkitTask task = jetpackTasks.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    private Integer findTntSlotInHotbar(Player player) {
+        for (int i = 0; i < 9; i++) {
+            if (player.getInventory().getItem(i) != null
+                    && player.getInventory().getItem(i).getType().name().equals("TNT")) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    private Integer findJetpackSlotInHotbar(Player player) {
+        for (int i = 0; i < 9; i++) {
+            if (player.getInventory().getItem(i) != null
+                    && player.getInventory().getItem(i).getType().name().equals("FIREWORK")) {
+                return i;
+            }
+        }
+        return null;
     }
 }

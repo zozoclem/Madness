@@ -12,3 +12,10 @@ arena-spawns: {}
 blocks:
   crack-start-after: 6
   remove-after: 12
+
+database:
+  host: "127.0.0.1"
+  port: 3306
+  name: "madness"
+  username: "root"
+  password: "password"

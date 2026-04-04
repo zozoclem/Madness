@@ -4,41 +4,27 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
-public final class CooldownItemFactory {
+public class CooldownItemFactory {
 
-    private CooldownItemFactory() {
+    public static ItemStack createBarrier(String name, int seconds) {
+        return createBarrier(name, "§7Recharge en cours...", seconds);
     }
 
-    public static ItemStack createTntCooldownItem(int seconds) {
+    public static ItemStack createBarrier(String name, String description, int seconds) {
         ItemStack item = new ItemStack(Material.BARRIER, 1);
         ItemMeta meta = item.getItemMeta();
 
         if (meta != null) {
-            meta.setDisplayName("§c§lInstant TNT §8- §7Cooldown");
-            meta.setLore(Arrays.asList(
-                    "",
-                    " §7Disponible dans: §f" + seconds + "s",
-                    ""
-            ));
-            item.setItemMeta(meta);
-        }
+            meta.setDisplayName(name);
 
-        return item;
-    }
+            List<String> lore = new ArrayList<String>();
+            lore.add(description);
+            lore.add("§7Temps restant: §c" + seconds + "s");
+            meta.setLore(lore);
 
-    public static ItemStack createJetpackCooldownItem(int seconds) {
-        ItemStack item = new ItemStack(Material.BARRIER, 1);
-        ItemMeta meta = item.getItemMeta();
-
-        if (meta != null) {
-            meta.setDisplayName("§e§lJetpack §8- §7Cooldown");
-            meta.setLore(Arrays.asList(
-                    "",
-                    " §7Disponible dans: §f" + seconds + "s",
-                    ""
-            ));
             item.setItemMeta(meta);
         }
 

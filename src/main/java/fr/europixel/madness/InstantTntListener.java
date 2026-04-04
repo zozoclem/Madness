@@ -61,7 +61,7 @@ public class InstantTntListener implements Listener {
 
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
 
-        plugin.getRechargeManager().startTntRecharge(player);
+        plugin.getRechargeManager().startTntRecharge(player, 10);
         player.updateInventory();
     }
 }

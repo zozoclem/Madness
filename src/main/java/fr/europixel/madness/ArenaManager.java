@@ -7,22 +7,22 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 public class ArenaManager {
 
     private final MadnessPlugin plugin;
-    private final Random random;
+    private int nextSpawnIndex;
 
     public ArenaManager(MadnessPlugin plugin) {
         this.plugin = plugin;
-        this.random = new Random();
+        this.nextSpawnIndex = 0;
     }
 
     public void sendToArena(Player player) {
-        Location spawn = getRandomArenaSpawn();
+        Location spawn = getNextArenaSpawn();
 
         if (spawn == null) {
             player.sendMessage("§cAucun spawn d'arène n'est configuré.");
@@ -33,9 +33,10 @@ public class ArenaManager {
         player.teleport(spawn);
         plugin.getRechargeManager().clear(player);
         plugin.getKitManager().giveKit(player);
+        plugin.getSidebarManager().update(player);
     }
 
-    public Location getRandomArenaSpawn() {
+    public Location getNextArenaSpawn() {
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("arena-spawns");
         if (section == null) {
             return null;
@@ -46,14 +47,36 @@ public class ArenaManager {
             return null;
         }
 
-        List<String> ids = new ArrayList<String>(keys);
-        String chosenId = ids.get(random.nextInt(ids.size()));
+        List<Integer> ids = new ArrayList<Integer>();
+
+        for (String key : keys) {
+            try {
+                ids.add(Integer.parseInt(key));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (ids.isEmpty()) {
+            return null;
+        }
+
+        Collections.sort(ids);
+
+        if (nextSpawnIndex >= ids.size()) {
+            nextSpawnIndex = 0;
+        }
+
+        int chosenId = ids.get(nextSpawnIndex);
+        nextSpawnIndex++;
 
         String path = "arena-spawns." + chosenId;
 
         String worldName = plugin.getConfig().getString(path + ".world");
-        World world = Bukkit.getWorld(worldName);
+        if (worldName == null) {
+            return null;
+        }
 
+        World world = Bukkit.getWorld(worldName);
         if (world == null) {
             return null;
         }

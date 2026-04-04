@@ -17,21 +17,21 @@ public class SetArenaSpawnCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cCommande joueur uniquement.");
+            sender.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.player-only", "&cCommande joueur uniquement.")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("madness.admin")) {
-            player.sendMessage("§cTu n'as pas la permission.");
+            player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.no-permission", "&cTu n'as pas la permission.")));
             return true;
         }
 
         Location loc = player.getLocation();
         int id = plugin.getArenaManager().addArenaSpawn(loc);
 
-        player.sendMessage("§aSpawn d'arène ajouté avec l'id §f" + id + "§a.");
+        player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.arena-set", "&aSpawn d'arène ajouté avec l'id &f%id%&a.").replace("%id%", String.valueOf(id))));
         return true;
     }
 }

@@ -1,7 +1,7 @@
 package fr.europixel.madness;
 
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -17,41 +17,35 @@ public class KitManager {
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
 
-        ItemStack sword = new ItemStack(Material.DIAMOND_SWORD, 1);
-        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
+        ConfigurationSection kitSection = plugin.getConfig().getConfigurationSection("kit");
+        ConfigurationSection armorSection = kitSection == null ? null : kitSection.getConfigurationSection("armor");
 
-        ItemStack pickaxe = new ItemStack(Material.IRON_PICKAXE, 1);
-        pickaxe.addEnchantment(Enchantment.DIG_SPEED, 2);
-
-        ItemStack goldenApples = new ItemStack(Material.GOLDEN_APPLE, 3);
-
-        ItemStack helmet = new ItemStack(Material.IRON_HELMET, 1);
-        ItemStack chestplate = new ItemStack(Material.IRON_CHESTPLATE, 1);
-        ItemStack leggings = new ItemStack(Material.IRON_LEGGINGS, 1);
-        ItemStack boots = new ItemStack(Material.IRON_BOOTS, 1);
+        ItemStack boots = ConfigItemFactory.fromSection(armorSection == null ? null : armorSection.getConfigurationSection("boots"), Material.IRON_BOOTS, 1);
+        ItemStack leggings = ConfigItemFactory.fromSection(armorSection == null ? null : armorSection.getConfigurationSection("leggings"), Material.IRON_LEGGINGS, 1);
+        ItemStack chestplate = ConfigItemFactory.fromSection(armorSection == null ? null : armorSection.getConfigurationSection("chestplate"), Material.IRON_CHESTPLATE, 1);
+        ItemStack helmet = ConfigItemFactory.fromSection(armorSection == null ? null : armorSection.getConfigurationSection("helmet"), Material.IRON_HELMET, 1);
 
         player.getInventory().setArmorContents(new ItemStack[] {
                 boots, leggings, chestplate, helmet
         });
 
-        player.getInventory().setItem(0, sword);
-        player.getInventory().setItem(1, ItemFactory.createTntItem());
-        player.getInventory().setItem(2, ItemFactory.createJetpackItem());
-        player.getInventory().setItem(3, pickaxe);
-        player.getInventory().setItem(4, goldenApples);
-
-        for (int slot = 5; slot <= 8; slot++) {
-            player.getInventory().setItem(slot, new ItemStack(Material.SANDSTONE, 64));
+        ItemStack[] defaultHotbar = createDefaultHotbar();
+        for (int slot = 0; slot < 9; slot++) {
+            player.getInventory().setItem(slot, defaultHotbar[slot]);
         }
 
         applySavedHotbar(player);
 
-        player.setHealth(20.0D);
-        player.setFoodLevel(20);
+        double health = plugin.getConfig().getDouble("player-reset.health", 20.0D);
+        int food = plugin.getConfig().getInt("player-reset.food", 20);
+        int heldSlot = plugin.getConfig().getInt("kit.selected-slot", 0);
+
+        player.setHealth(Math.min(20.0D, health));
+        player.setFoodLevel(food);
         player.setFireTicks(0);
         player.setLevel(0);
         player.setExp(0.0F);
-        player.getInventory().setHeldItemSlot(0);
+        player.getInventory().setHeldItemSlot(Math.max(0, Math.min(8, heldSlot)));
         player.updateInventory();
     }
 
@@ -68,21 +62,14 @@ public class KitManager {
 
     public ItemStack[] createDefaultHotbar() {
         ItemStack[] hotbar = new ItemStack[9];
+        ConfigurationSection hotbarSection = plugin.getConfig().getConfigurationSection("kit.hotbar");
 
-        ItemStack sword = new ItemStack(Material.DIAMOND_SWORD, 1);
-        sword.addEnchantment(Enchantment.DAMAGE_ALL, 1);
-
-        ItemStack pickaxe = new ItemStack(Material.IRON_PICKAXE, 1);
-        pickaxe.addEnchantment(Enchantment.DIG_SPEED, 2);
-
-        hotbar[0] = sword;
-        hotbar[1] = ItemFactory.createTntItem();
-        hotbar[2] = ItemFactory.createJetpackItem();
-        hotbar[3] = pickaxe;
-        hotbar[4] = new ItemStack(Material.GOLDEN_APPLE, 3);
-
-        for (int i = 5; i <= 8; i++) {
-            hotbar[i] = new ItemStack(Material.SANDSTONE, 64);
+        for (int i = 0; i < 9; i++) {
+            ConfigurationSection slotSection = hotbarSection == null ? null : hotbarSection.getConfigurationSection(String.valueOf(i));
+            hotbar[i] = ConfigItemFactory.fromSection(slotSection, Material.AIR, 1);
+            if (hotbar[i].getType() == Material.AIR) {
+                hotbar[i] = null;
+            }
         }
 
         return hotbar;

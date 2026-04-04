@@ -6,7 +6,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public class CooldownBarListener implements Listener {
 
@@ -36,15 +35,18 @@ public class CooldownBarListener implements Listener {
             return;
         }
 
+        int tntMax = plugin.getConfig().getInt("tnt.recharge", 10);
+        int jetpackMax = plugin.getConfig().getInt("jetpack.recharge", 60);
+
         if (isTntItem(item) && plugin.getRechargeManager().isTntOnCooldown(player)) {
             player.setLevel(plugin.getRechargeManager().getRemainingTntSeconds(player));
-            player.setExp(plugin.getRechargeManager().getTntProgress(player, 10));
+            player.setExp(plugin.getRechargeManager().getTntProgress(player, tntMax));
             return;
         }
 
         if (isJetpackItem(item) && plugin.getRechargeManager().isJetpackOnCooldown(player)) {
             player.setLevel(plugin.getRechargeManager().getRemainingJetpackSeconds(player));
-            player.setExp(plugin.getRechargeManager().getJetpackProgress(player, 60));
+            player.setExp(plugin.getRechargeManager().getJetpackProgress(player, jetpackMax));
             return;
         }
 
@@ -57,39 +59,12 @@ public class CooldownBarListener implements Listener {
     }
 
     private boolean isTntItem(ItemStack item) {
-        if (item.getType() == Material.TNT) {
-            return true;
-        }
-
-        if (item.getType() == Material.BARRIER) {
-            return hasDisplayName(item, "§cTNT en recharge");
-        }
-
-        return false;
+        return ItemFactory.isSimilarKeyItem(item, "tnt")
+                || ConfigUtil.sameDisplayName(item, MadnessPlugin.getInstance().getConfig().getString("cooldowns.tnt.name"));
     }
 
     private boolean isJetpackItem(ItemStack item) {
-        if (item.getType() == Material.FIREWORK) {
-            return true;
-        }
-
-        if (item.getType() == Material.BARRIER) {
-            return hasDisplayName(item, "§cJetpack en recharge");
-        }
-
-        return false;
-    }
-
-    private boolean hasDisplayName(ItemStack item, String expected) {
-        if (!item.hasItemMeta()) {
-            return false;
-        }
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) {
-            return false;
-        }
-
-        return expected.equals(meta.getDisplayName());
+        return ItemFactory.isSimilarKeyItem(item, "jetpack")
+                || ConfigUtil.sameDisplayName(item, MadnessPlugin.getInstance().getConfig().getString("cooldowns.jetpack.name"));
     }
 }

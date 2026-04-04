@@ -25,7 +25,7 @@ public class ArenaManager {
         Location spawn = getNextArenaSpawn();
 
         if (spawn == null) {
-            player.sendMessage("§cAucun spawn d'arène n'est configuré.");
+            player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.no-arena-spawn", "&cAucun spawn d\'arène n\'est configuré.")));
             return;
         }
 

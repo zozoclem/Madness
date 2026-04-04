@@ -14,23 +14,25 @@ public class MadnessCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        String usage = ConfigUtil.color(plugin.getConfig().getString("messages.commands.madness-usage", "&cUsage: /madness reload"));
+
         if (args.length == 0) {
-            sender.sendMessage("§cUsage: /madness reload");
+            sender.sendMessage(usage);
             return true;
         }
 
         if (args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("madness.reload")) {
-                sender.sendMessage("§cTu n'as pas la permission.");
+                sender.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.no-permission", "&cTu n'as pas la permission.")));
                 return true;
             }
 
             plugin.reloadPlugin();
-            sender.sendMessage("§aMadness a ete recharge.");
+            sender.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.reload", "&aMadness a été rechargé.")));
             return true;
         }
 
-        sender.sendMessage("§cUsage: /madness reload");
+        sender.sendMessage(usage);
         return true;
     }
 }

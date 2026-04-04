@@ -1,9 +1,12 @@
 package fr.europixel.madness;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+
+import java.util.List;
 
 public class DamageProtectionListener implements Listener {
 
@@ -13,12 +16,21 @@ public class DamageProtectionListener implements Listener {
             return;
         }
 
-        EntityDamageEvent.DamageCause cause = event.getCause();
+        ConfigurationSection section = MadnessPlugin.getInstance().getConfig().getConfigurationSection("protections.damage-cancelled");
+        if (section == null) {
+            return;
+        }
 
-        if (cause == EntityDamageEvent.DamageCause.FALL
-                || cause == EntityDamageEvent.DamageCause.BLOCK_EXPLOSION
-                || cause == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION) {
-            event.setCancelled(true);
+        List<String> causes = section.getStringList("causes");
+        for (String causeName : causes) {
+            try {
+                EntityDamageEvent.DamageCause cause = EntityDamageEvent.DamageCause.valueOf(causeName.toUpperCase());
+                if (event.getCause() == cause) {
+                    event.setCancelled(true);
+                    return;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
         }
     }
 }

@@ -30,29 +30,36 @@ public class KillListener implements Listener {
         plugin.getPlayerStatsManager().addKill(killer);
 
         healInstant(killer);
-        giveGoldenApple(killer);
+        giveRewardItem(killer);
         plugin.getRechargeManager().resetTnt(killer);
         plugin.getRechargeManager().resetJetpack(killer);
 
-        ActionBarUtil.sendActionBar(killer, "§aVous avez tué §f" + victim.getName());
+        String actionBar = plugin.getConfig().getString("kill-rewards.actionbar", "&aVous avez tué &f%victim%");
+        ActionBarUtil.sendActionBar(killer, ConfigUtil.color(actionBar.replace("%victim%", victim.getName())));
 
         plugin.getSidebarManager().update(killer);
         plugin.getSidebarManager().update(victim);
     }
 
     private void healInstant(Player killer) {
-        double newHealth = killer.getHealth() + 8.0D;
-        if (newHealth > 20.0D) {
-            newHealth = 20.0D;
+        double heal = plugin.getConfig().getDouble("kill-rewards.heal", 8.0D);
+        double maxHealth = plugin.getConfig().getDouble("kill-rewards.max-health", 20.0D);
+
+        double newHealth = killer.getHealth() + heal;
+        if (newHealth > maxHealth) {
+            newHealth = maxHealth;
         }
 
         killer.setHealth(newHealth);
-        killer.setFireTicks(0);
+        if (plugin.getConfig().getBoolean("kill-rewards.clear-fire", true)) {
+            killer.setFireTicks(0);
+        }
     }
 
-    private void giveGoldenApple(Player killer) {
-        ItemStack item = new ItemStack(Material.GOLDEN_APPLE, 1);
-        killer.getInventory().addItem(item);
+    private void giveRewardItem(Player killer) {
+        Material material = ConfigUtil.getMaterial(plugin.getConfig().getString("kill-rewards.item.material"), Material.GOLDEN_APPLE);
+        int amount = plugin.getConfig().getInt("kill-rewards.item.amount", 1);
+        killer.getInventory().addItem(new ItemStack(material, amount));
         killer.updateInventory();
     }
 }

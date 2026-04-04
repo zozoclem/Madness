@@ -35,7 +35,7 @@ public class ItemRechargeManager {
         tntCooldowns.put(uuid, end);
         tntSlots.put(uuid, slot);
 
-        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("§cTNT en recharge", seconds));
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.tnt", seconds));
         player.updateInventory();
 
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
@@ -66,7 +66,7 @@ public class ItemRechargeManager {
         jetpackCooldowns.put(uuid, end);
         jetpackSlots.put(uuid, slot);
 
-        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("§cJetpack en recharge", seconds));
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.jetpack", seconds));
         player.updateInventory();
 
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
@@ -146,32 +146,15 @@ public class ItemRechargeManager {
     }
 
     public float getTntProgress(Player player, int maxSeconds) {
-        Long end = tntCooldowns.get(player.getUniqueId());
-        if (end == null) {
-            return 0.0F;
-        }
-
-        long remaining = end - System.currentTimeMillis();
-        if (remaining <= 0L) {
-            return 0.0F;
-        }
-
-        float progress = (float) remaining / (float) (maxSeconds * 1000L);
-
-        if (progress < 0.0F) {
-            progress = 0.0F;
-        }
-
-        if (progress > 1.0F) {
-            progress = 1.0F;
-        }
-
-        return progress;
+        return getProgress(tntCooldowns.get(player.getUniqueId()), maxSeconds);
     }
 
     public float getJetpackProgress(Player player, int maxSeconds) {
-        Long end = jetpackCooldowns.get(player.getUniqueId());
-        if (end == null) {
+        return getProgress(jetpackCooldowns.get(player.getUniqueId()), maxSeconds);
+    }
+
+    private float getProgress(Long end, int maxSeconds) {
+        if (end == null || maxSeconds <= 0) {
             return 0.0F;
         }
 
@@ -181,16 +164,7 @@ public class ItemRechargeManager {
         }
 
         float progress = (float) remaining / (float) (maxSeconds * 1000L);
-
-        if (progress < 0.0F) {
-            progress = 0.0F;
-        }
-
-        if (progress > 1.0F) {
-            progress = 1.0F;
-        }
-
-        return progress;
+        return Math.max(0.0F, Math.min(1.0F, progress));
     }
 
     public void resetTnt(Player player) {
@@ -200,7 +174,7 @@ public class ItemRechargeManager {
         clearTnt(player);
 
         if (slot == null) {
-            slot = findTntSlotInHotbar(player);
+            slot = findItemSlot(player, "tnt");
         }
 
         if (slot != null) {
@@ -216,7 +190,7 @@ public class ItemRechargeManager {
         clearJetpack(player);
 
         if (slot == null) {
-            slot = findJetpackSlotInHotbar(player);
+            slot = findItemSlot(player, "jetpack");
         }
 
         if (slot != null) {
@@ -254,20 +228,9 @@ public class ItemRechargeManager {
         }
     }
 
-    private Integer findTntSlotInHotbar(Player player) {
+    private Integer findItemSlot(Player player, String configKey) {
         for (int i = 0; i < 9; i++) {
-            if (player.getInventory().getItem(i) != null
-                    && player.getInventory().getItem(i).getType().name().equals("TNT")) {
-                return i;
-            }
-        }
-        return null;
-    }
-
-    private Integer findJetpackSlotInHotbar(Player player) {
-        for (int i = 0; i < 9; i++) {
-            if (player.getInventory().getItem(i) != null
-                    && player.getInventory().getItem(i).getType().name().equals("FIREWORK")) {
+            if (ItemFactory.isSimilarKeyItem(player.getInventory().getItem(i), configKey)) {
                 return i;
             }
         }

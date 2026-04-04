@@ -3,6 +3,7 @@ package fr.europixel.madness;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,12 +25,16 @@ public class BlockPlaceBreakListener implements Listener {
         final Player player = event.getPlayer();
         final ItemStack item = event.getItemInHand();
 
-        if (block.getType() == Material.BARRIER) {
+        Material blockedMaterial = ConfigUtil.getMaterial(plugin.getConfig().getString("blocks.blocked-place-material"), Material.BARRIER);
+        Material trackedMaterial = ConfigUtil.getMaterial(plugin.getConfig().getString("blocks.tracked-material"), Material.SANDSTONE);
+        int refillAmount = plugin.getConfig().getInt("blocks.refill-amount", 64);
+
+        if (block.getType() == blockedMaterial) {
             event.setCancelled(true);
             return;
         }
 
-        if (block.getType() == Material.SANDSTONE) {
+        if (block.getType() == trackedMaterial) {
             plugin.getBlockDecayManager().track(block);
 
             Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
@@ -37,13 +42,13 @@ public class BlockPlaceBreakListener implements Listener {
                 public void run() {
                     ItemStack current = player.getInventory().getItem(player.getInventory().getHeldItemSlot());
 
-                    if (current != null && current.getType() == Material.SANDSTONE) {
-                        current.setAmount(64);
+                    if (current != null && current.getType() == trackedMaterial) {
+                        current.setAmount(refillAmount);
                         player.setItemInHand(current);
-                    } else if (item != null && item.getType() == Material.SANDSTONE) {
-                        ItemStack sandstone = item.clone();
-                        sandstone.setAmount(64);
-                        player.getInventory().setItem(player.getInventory().getHeldItemSlot(), sandstone);
+                    } else if (item != null && item.getType() == trackedMaterial) {
+                        ItemStack cloned = item.clone();
+                        cloned.setAmount(refillAmount);
+                        player.getInventory().setItem(player.getInventory().getHeldItemSlot(), cloned);
                     }
 
                     player.updateInventory();

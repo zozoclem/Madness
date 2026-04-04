@@ -30,7 +30,7 @@ public class EditKitListener implements Listener {
             return;
         }
 
-        if (!EditKitMenu.TITLE.equals(event.getView().getTitle())) {
+        if (!EditKitMenu.getTitle(plugin).equals(event.getView().getTitle())) {
             return;
         }
 
@@ -56,20 +56,20 @@ public class EditKitListener implements Listener {
             return;
         }
 
-        // inventaire du joueur du bas : totalement bloqué
         if (rawSlot >= top.getSize()) {
             event.setCancelled(true);
             return;
         }
 
-        // hotbar éditable
         if (rawSlot >= 0 && rawSlot <= 8) {
             event.setCancelled(false);
             return;
         }
 
-        // sauvegarder
-        if (rawSlot == 22) {
+        int saveSlot = plugin.getConfig().getInt("editkit-menu.save.slot", 22);
+        int cancelSlot = plugin.getConfig().getInt("editkit-menu.cancel.slot", 26);
+
+        if (rawSlot == saveSlot) {
             event.setCancelled(true);
 
             ItemStack[] edited = new ItemStack[9];
@@ -79,23 +79,22 @@ public class EditKitListener implements Listener {
             }
 
             if (!isValidHotbar(edited)) {
-                player.sendMessage("§cHotbar invalide.");
-                player.sendMessage("§7Vous devez garder tous les items du kit.");
+                player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.editkit.invalid", "&cHotbar invalide.")));
+                player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.editkit.invalid-details", "&7Vous devez garder tous les items du kit.")));
                 return;
             }
 
             plugin.getPlayerStatsManager().setHotbar(player, edited);
             plugin.getPlayerStatsManager().savePlayer(player);
 
-            player.sendMessage("§aVotre hotbar a été sauvegardée.");
+            player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.editkit.saved", "&aVotre hotbar a été sauvegardée.")));
             player.closeInventory();
             return;
         }
 
-        // annuler
-        if (rawSlot == 26) {
+        if (rawSlot == cancelSlot) {
             event.setCancelled(true);
-            player.sendMessage("§cModification annulée.");
+            player.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.editkit.cancelled", "&cModification annulée.")));
             player.closeInventory();
             return;
         }
@@ -109,7 +108,7 @@ public class EditKitListener implements Listener {
             return;
         }
 
-        if (!EditKitMenu.TITLE.equals(event.getView().getTitle())) {
+        if (!EditKitMenu.getTitle(plugin).equals(event.getView().getTitle())) {
             return;
         }
 
@@ -129,7 +128,7 @@ public class EditKitListener implements Listener {
             return;
         }
 
-        if (!EditKitMenu.TITLE.equals(event.getView().getTitle())) {
+        if (!EditKitMenu.getTitle(plugin).equals(event.getView().getTitle())) {
             return;
         }
 
@@ -137,14 +136,32 @@ public class EditKitListener implements Listener {
 
         player.setItemOnCursor(new ItemStack(Material.AIR));
         plugin.getLobbyManager().giveLobbyItems(player);
-        player.getInventory().setHeldItemSlot(4);
+        player.getInventory().setHeldItemSlot(Math.max(0, Math.min(8, plugin.getConfig().getInt("lobby.selected-slot", 4))));
         player.updateInventory();
     }
 
     private boolean isValidHotbar(ItemStack[] hotbar) {
+        Map<Material, Integer> currentCounts = count(hotbar);
+        Map<Material, Integer> requiredCounts = count(plugin.getKitManager().createDefaultHotbar());
+
+        for (Map.Entry<Material, Integer> entry : requiredCounts.entrySet()) {
+            Integer current = currentCounts.get(entry.getKey());
+            if (current == null || current < entry.getValue()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private Map<Material, Integer> count(ItemStack[] items) {
         Map<Material, Integer> counts = new HashMap<Material, Integer>();
 
-        for (ItemStack item : hotbar) {
+        if (items == null) {
+            return counts;
+        }
+
+        for (ItemStack item : items) {
             if (item == null) {
                 continue;
             }
@@ -158,16 +175,6 @@ public class EditKitListener implements Listener {
             counts.put(type, amount + item.getAmount());
         }
 
-        return hasAtLeast(counts, Material.DIAMOND_SWORD, 1)
-                && hasAtLeast(counts, Material.TNT, 1)
-                && hasAtLeast(counts, Material.FIREWORK, 1)
-                && hasAtLeast(counts, Material.IRON_PICKAXE, 1)
-                && hasAtLeast(counts, Material.GOLDEN_APPLE, 3)
-                && hasAtLeast(counts, Material.SANDSTONE, 256);
-    }
-
-    private boolean hasAtLeast(Map<Material, Integer> counts, Material material, int min) {
-        Integer value = counts.get(material);
-        return value != null && value >= min;
+        return counts;
     }
 }

@@ -1,3 +1,43 @@
+# ==============================
+# Madness - Full configuration
+# ==============================
+
+messages:
+  commands:
+    player-only: "&cPlayer-only command."
+    no-permission: "&cYou don't have permission."
+    madness-usage: "&cUsage: /madness reload"
+    reload: "&aMadness has been reloaded."
+    lobby-set: "&aLobby spawn has been set."
+    arena-set: "&aArena spawn added with id &f%id%&a."
+    no-arena-spawn: "&cNo arena spawn is configured."
+  editkit:
+    invalid: "&cInvalid hotbar."
+    invalid-details: "&7You must keep all default kit items."
+    saved: "&aYour hotbar has been saved."
+    cancelled: "&cEdit cancelled."
+
+player-reset:
+  health: 20.0
+  food: 20
+
+lobby:
+  selected-slot: 4
+  spawn:
+    world: world
+    x: 0.5
+    y: 64.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+  items:
+    edit-kit:
+      slot: 0
+    play:
+      slot: 4
+
+arena-spawns: {}
+
 tnt:
   power: -3.6
   min-y: 1.0
@@ -7,11 +47,154 @@ jetpack:
   y: 3.6
   recharge: 60
 
-arena-spawns: {}
-
 blocks:
+  tracked-material: SANDSTONE
+  blocked-place-material: BARRIER
+  refill-amount: 64
   crack-start-after: 6
   remove-after: 12
+
+protections:
+  damage-cancelled:
+    causes:
+      - FALL
+      - BLOCK_EXPLOSION
+      - ENTITY_EXPLOSION
+
+kill-rewards:
+  heal: 8.0
+  max-health: 20.0
+  clear-fire: true
+  actionbar: "&aYou killed &f%victim%"
+  item:
+    material: GOLDEN_APPLE
+    amount: 1
+
+cooldowns:
+  tnt:
+    material: BARRIER
+    amount: 1
+    name: "&cTNT recharging"
+    lore:
+      - "&7Recharging..."
+    remaining-line: "&7Time left: &c%seconds%s"
+  jetpack:
+    material: BARRIER
+    amount: 1
+    name: "&cJetpack recharging"
+    lore:
+      - "&7Recharging..."
+    remaining-line: "&7Time left: &c%seconds%s"
+
+items:
+  play:
+    material: DIAMOND_AXE
+    amount: 1
+    name: "&a&lPlay"
+    lore:
+      - "&7Click to join the arena."
+  edit-kit:
+    material: BLAZE_ROD
+    amount: 1
+    name: "&e&lEditKit"
+    lore:
+      - "&7Click to edit"
+      - "&7your hotbar."
+  tnt:
+    material: TNT
+    amount: 1
+    name: "&c&lTNT"
+    lore:
+      - "&7Use it to launch yourself."
+  jetpack:
+    material: FIREWORK
+    amount: 1
+    name: "&b&lJetpack"
+    lore:
+      - "&7Use it to move around."
+
+kit:
+  selected-slot: 0
+  armor:
+    helmet:
+      material: IRON_HELMET
+      amount: 1
+    chestplate:
+      material: IRON_CHESTPLATE
+      amount: 1
+    leggings:
+      material: IRON_LEGGINGS
+      amount: 1
+    boots:
+      material: IRON_BOOTS
+      amount: 1
+  hotbar:
+    "0":
+      material: DIAMOND_SWORD
+      amount: 1
+      enchants:
+        DAMAGE_ALL: 1
+    "1":
+      material: TNT
+      amount: 1
+      name: "&c&lTNT"
+      lore:
+        - "&7Use it to launch yourself."
+    "2":
+      material: FIREWORK
+      amount: 1
+      name: "&b&lJetpack"
+      lore:
+        - "&7Use it to move around."
+    "3":
+      material: IRON_PICKAXE
+      amount: 1
+      enchants:
+        DIG_SPEED: 2
+    "4":
+      material: GOLDEN_APPLE
+      amount: 3
+    "5":
+      material: SANDSTONE
+      amount: 64
+    "6":
+      material: SANDSTONE
+      amount: 64
+    "7":
+      material: SANDSTONE
+      amount: 64
+    "8":
+      material: SANDSTONE
+      amount: 64
+
+editkit-menu:
+  title: "&eEditKit"
+  size: 27
+  filler:
+    material: STAINED_GLASS_PANE
+    data: 15
+    amount: 1
+    name: " "
+  save:
+    slot: 22
+    item:
+      material: STAINED_CLAY
+      data: 5
+      amount: 1
+      name: "&a&lSAVE"
+      lore:
+        - "&7Click to save"
+        - "&7your hotbar."
+  cancel:
+    slot: 26
+    item:
+      material: STAINED_CLAY
+      data: 14
+      amount: 1
+      name: "&c&lCANCEL"
+      lore:
+        - "&7Click to cancel"
+        - "&7changes."
 
 database:
   host: "127.0.0.1"

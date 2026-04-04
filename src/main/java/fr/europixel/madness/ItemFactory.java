@@ -1,75 +1,55 @@
 package fr.europixel.madness;
 
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ItemFactory {
 
+    private static ConfigurationSection items() {
+        MadnessPlugin plugin = MadnessPlugin.getInstance();
+        return plugin == null ? null : plugin.getConfig().getConfigurationSection("items");
+    }
+
     public static ItemStack createTntItem() {
-        ItemStack item = new ItemStack(Material.TNT, 1);
-        ItemMeta meta = item.getItemMeta();
-
-        if (meta != null) {
-            meta.setDisplayName("§c§lTNT");
-
-            List<String> lore = new ArrayList<String>();
-            lore.add("§7Utilisez pour vous propulser.");
-            item.setItemMeta(meta);
-        }
-
-        return item;
+        ConfigurationSection section = items() == null ? null : items().getConfigurationSection("tnt");
+        return ConfigItemFactory.fromSection(section, Material.TNT, 1);
     }
 
     public static ItemStack createJetpackItem() {
-        ItemStack item = new ItemStack(Material.FIREWORK, 1);
-        ItemMeta meta = item.getItemMeta();
-
-        if (meta != null) {
-            meta.setDisplayName("§b§lJetpack");
-
-            List<String> lore = new ArrayList<String>();
-            lore.add("§7Utilisez pour vous déplacer.");
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-
-        return item;
+        ConfigurationSection section = items() == null ? null : items().getConfigurationSection("jetpack");
+        return ConfigItemFactory.fromSection(section, Material.FIREWORK, 1);
     }
 
     public static ItemStack createPlayAxe() {
-        ItemStack item = new ItemStack(Material.DIAMOND_AXE, 1);
-        ItemMeta meta = item.getItemMeta();
-
-        if (meta != null) {
-            meta.setDisplayName("§a§lJouer");
-
-            List<String> lore = new ArrayList<String>();
-            lore.add("§7Cliquez pour rejoindre l'arène.");
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-
-        return item;
+        ConfigurationSection section = items() == null ? null : items().getConfigurationSection("play");
+        return ConfigItemFactory.fromSection(section, Material.DIAMOND_AXE, 1);
     }
 
     public static ItemStack createEditKitItem() {
-        ItemStack item = new ItemStack(Material.BLAZE_ROD, 1);
-        ItemMeta meta = item.getItemMeta();
+        ConfigurationSection section = items() == null ? null : items().getConfigurationSection("edit-kit");
+        return ConfigItemFactory.fromSection(section, Material.BLAZE_ROD, 1);
+    }
 
-        if (meta != null) {
-            meta.setDisplayName("§e§lEditKit");
-
-            List<String> lore = new ArrayList<String>();
-            lore.add("§7Cliquez pour modifier");
-            lore.add("§7votre hotbar.");
-            meta.setLore(lore);
-            item.setItemMeta(meta);
+    public static boolean isSimilarKeyItem(ItemStack item, String configKey) {
+        if (item == null) {
+            return false;
         }
 
-        return item;
+        ConfigurationSection section = items() == null ? null : items().getConfigurationSection(configKey);
+        if (section == null) {
+            return false;
+        }
+
+        Material expected = ConfigUtil.getMaterial(section.getString("material"), item.getType());
+        if (item.getType() != expected) {
+            return false;
+        }
+
+        if (section.contains("name")) {
+            return ConfigUtil.sameDisplayName(item, section.getString("name"));
+        }
+
+        return true;
     }
 }

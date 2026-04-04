@@ -23,8 +23,7 @@ public class ArenaInventoryLockListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        // ignore l'EditKit
-        if (event.getView() != null && EditKitMenu.TITLE.equals(event.getView().getTitle())) {
+        if (event.getView() != null && EditKitMenu.getTitle(plugin).equals(event.getView().getTitle())) {
             return;
         }
 
@@ -32,10 +31,8 @@ public class ArenaInventoryLockListener implements Listener {
             return;
         }
 
-        // bloque tout mouvement d'inventaire en arène
         event.setCancelled(true);
 
-        // sécurité en plus
         if (event.isShiftClick()
                 || event.getClick() == ClickType.NUMBER_KEY
                 || event.getClick() == ClickType.DOUBLE_CLICK
@@ -53,8 +50,7 @@ public class ArenaInventoryLockListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        // ignore l'EditKit
-        if (event.getView() != null && EditKitMenu.TITLE.equals(event.getView().getTitle())) {
+        if (event.getView() != null && EditKitMenu.getTitle(plugin).equals(event.getView().getTitle())) {
             return;
         }
 

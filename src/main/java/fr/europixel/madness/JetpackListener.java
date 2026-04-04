@@ -1,6 +1,5 @@
 package fr.europixel.madness;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -27,7 +26,7 @@ public class JetpackListener implements Listener {
         Player player = event.getPlayer();
         ItemStack item = player.getItemInHand();
 
-        if (item == null || item.getType() != Material.FIREWORK) {
+        if (!ItemFactory.isSimilarKeyItem(item, "jetpack")) {
             return;
         }
 
@@ -38,14 +37,14 @@ public class JetpackListener implements Listener {
 
         event.setCancelled(true);
 
-        double y = plugin.getConfig().getDouble("jetpack.y");
+        double y = plugin.getConfig().getDouble("jetpack.y", 3.6D);
 
         Vector v = player.getLocation().getDirection();
         v.setY(y);
 
         player.setVelocity(v);
 
-        plugin.getRechargeManager().startJetpackRecharge(player,60);
+        plugin.getRechargeManager().startJetpackRecharge(player, plugin.getConfig().getInt("jetpack.recharge", 60));
         player.updateInventory();
     }
 }

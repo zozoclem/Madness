@@ -3,7 +3,6 @@ package fr.europixel.madness;
 import net.minecraft.server.v1_8_R3.PacketPlayOutExplosion;
 import net.minecraft.server.v1_8_R3.Vec3D;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -29,7 +28,7 @@ public class InstantTntListener implements Listener {
         ItemStack item = event.getItemInHand();
         Block block = event.getBlockPlaced();
 
-        if (item == null || item.getType() != Material.TNT) {
+        if (!ItemFactory.isSimilarKeyItem(item, "tnt")) {
             return;
         }
 
@@ -40,8 +39,8 @@ public class InstantTntListener implements Listener {
 
         event.setCancelled(true);
 
-        double power = plugin.getConfig().getDouble("tnt.power");
-        double minY = plugin.getConfig().getDouble("tnt.min-y");
+        double power = plugin.getConfig().getDouble("tnt.power", -3.6D);
+        double minY = plugin.getConfig().getDouble("tnt.min-y", 1.0D);
 
         Location loc = block.getLocation();
 
@@ -61,7 +60,7 @@ public class InstantTntListener implements Listener {
 
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
 
-        plugin.getRechargeManager().startTntRecharge(player, 10);
+        plugin.getRechargeManager().startTntRecharge(player, plugin.getConfig().getInt("tnt.recharge", 10));
         player.updateInventory();
     }
 }

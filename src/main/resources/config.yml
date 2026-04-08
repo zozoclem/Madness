@@ -3,19 +3,33 @@
 # ==============================
 
 messages:
+  shop:
+    selected: "&aYou selected &f%block%&a."
+    bought: "&aYou bought &f%block% &afor &6%price% coins&a."
+    not-enough: "&cYou do not have enough coins."
+    purchase-failed: "&cPurchase failed."
+    no-economy: "&cEconomy is unavailable."
   commands:
     player-only: "&cPlayer-only command."
     no-permission: "&cYou don't have permission."
-    madness-usage: "&cUsage: /madness reload"
+    madness-usage: "&cUsage: /madness reload|setpos1|setpos2"
     reload: "&aMadness has been reloaded."
     lobby-set: "&aLobby spawn has been set."
     arena-set: "&aArena spawn added with id &f%id%&a."
+    arena-pos1-set: "&aArena pos1 has been set."
+    arena-pos2-set: "&aArena pos2 has been set."
     no-arena-spawn: "&cNo arena spawn is configured."
   editkit:
     invalid: "&cInvalid hotbar."
     invalid-details: "&7You must keep all default kit items."
     saved: "&aYour hotbar has been saved."
     cancelled: "&cEdit cancelled."
+
+
+chat:
+  enabled: true
+  format: "%prefix% &7%player% &8» &f%message%"
+
 
 player-reset:
   health: 20.0
@@ -35,8 +49,12 @@ lobby:
       slot: 0
     play:
       slot: 4
+    shop:
+      slot: 8
 
 arena-spawns: {}
+
+arena-boundaries: {}
 
 tnt:
   power: -3.6
@@ -61,11 +79,42 @@ protections:
       - BLOCK_EXPLOSION
       - ENTITY_EXPLOSION
 
+coins:
+  enabled: true
+  reward-per-kill: 10.0
+  rounding: 2
+  actionbar: "&6+%coins% coins &7(x%multiplier%)"
+
+  multipliers:
+    default: 1.0
+    permission-list:
+      vip:
+        permission: "madness.coins.multiplier.1_5"
+        value: 1.5
+      mvp:
+        permission: "madness.coins.multiplier.2"
+        value: 2.0
+      sponsor:
+        permission: "madness.coins.multiplier.3"
+        value: 3.0
+
+killstreak:
+  broadcast-message: "&6%player% &fis &c%adjective%&f! &7(%streak% kill streak)"
+  messages:
+    "5": "incredible"
+    "10": "monstrous"
+    "15": "insane"
+    "20": "legendary"
+    "25": "godlike"
+    "30": "unstoppable"
+
 kill-rewards:
   heal: 8.0
   max-health: 20.0
   clear-fire: true
   actionbar: "&aYou killed &f%victim%"
+  death-actionbar: "&cKilled by &f%killer%"
+  death-actionbar-no-killer: "&cYou died"
   item:
     material: GOLDEN_APPLE
     amount: 1
@@ -87,6 +136,13 @@ cooldowns:
     remaining-line: "&7Time left: &c%seconds%s"
 
 items:
+  shop:
+    material: EMERALD
+    amount: 1
+    name: "&6&lShop"
+    lore:
+      - "&7Click to buy"
+      - "&7new block types."
   play:
     material: DIAMOND_AXE
     amount: 1
@@ -112,6 +168,14 @@ items:
     name: "&b&lJetpack"
     lore:
       - "&7Use it to move around."
+
+levels:
+  kill-xp: 10
+  base-xp: 100
+  per-level: 25
+  xp-actionbar: "&b+%xp% xp"
+  level-up-message: "&aLevel up! &7You are now level &e%level%"
+  level-up-actionbar: "&aLevel &e%level%&a!"
 
 kit:
   selected-slot: 0
@@ -196,6 +260,62 @@ editkit-menu:
         - "&7Click to cancel"
         - "&7changes."
 
+block-shop:
+  title: "&6Block Shop"
+  size: 27
+
+  filler:
+    material: STAINED_GLASS_PANE
+    data: 15
+    amount: 1
+    name: " "
+
+  status:
+    selected: "&aSelected"
+    owned: "&eOwned &7(click to select)"
+    buy: "&6Price: &e%price% coins &7(click to buy)"
+
+  blocks:
+    sandstone:
+      slot: 10
+      material: SANDSTONE
+      amount: 1
+      data: 0
+      price: 0
+      name: "&eSandstone"
+      lore:
+        - "&7Default block"
+
+    endstone:
+      slot: 12
+      material: ENDER_STONE
+      amount: 1
+      data: 0
+      price: 250
+      name: "&eEnd Stone"
+      lore:
+        - "&7Clean block style"
+
+    quartz:
+      slot: 14
+      material: QUARTZ_BLOCK
+      amount: 1
+      data: 0
+      price: 500
+      name: "&fQuartz Block"
+      lore:
+        - "&7Premium clean block"
+
+    prismarine:
+      slot: 16
+      material: PRISMARINE
+      amount: 1
+      data: 0
+      price: 750
+      name: "&bPrismarine"
+      lore:
+        - "&7Fancy block"
+        -
 database:
   host: "127.0.0.1"
   port: 3306

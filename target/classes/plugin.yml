@@ -2,11 +2,13 @@ name: Madness
 version: 1.0
 main: fr.europixel.madness.MadnessPlugin
 author: zozoclem
+softdepend:
+  - Vault
 
 commands:
   madness:
     description: Commande principale de Madness
-    usage: /madness reload
+    usage: /madness reload|setpos1|setpos2
   setspawn:
     description: Definit le spawn du lobby
     usage: /setspawn
@@ -21,3 +23,12 @@ permissions:
   madness.admin:
     description: Permet d'utiliser les commandes admin
     default: op
+  madness.coins.multiplier.1_5:
+    description: Multiplicateur de coins x1.5
+    default: false
+  madness.coins.multiplier.2:
+    description: Multiplicateur de coins x2
+    default: false
+  madness.coins.multiplier.3:
+    description: Multiplicateur de coins x3
+    default: false

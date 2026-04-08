@@ -1,7 +1,7 @@
 package fr.europixel.madness.sidebar;
 
 import fr.europixel.madness.MadnessPlugin;
-import fr.europixel.madness.PlayerMode;
+import fr.europixel.madness.model.PlayerMode;
 import fr.europixel.madness.utils.fastboard.FastBoard;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;

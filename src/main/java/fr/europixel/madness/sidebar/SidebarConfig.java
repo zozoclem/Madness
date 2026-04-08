@@ -5,7 +5,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SidebarConfig {
 
@@ -33,18 +34,35 @@ public class SidebarConfig {
     }
 
     public void reload() {
-        config = YamlConfiguration.loadConfiguration(file);
-    }
-
-    public void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        load();
     }
 
     public FileConfiguration getConfig() {
         return config;
+    }
+
+    public boolean isEnabled() {
+        return config.getBoolean("enabled", true);
+    }
+
+    public int getUpdateTicks() {
+        return config.getInt("update-ticks", 20);
+    }
+
+    public String getTitle() {
+        return config.getString("title", "&6&lMADNESS");
+    }
+
+    public String getTitle(String section) {
+        return config.getString(section + ".title", getTitle());
+    }
+
+    public List<String> getLines(String section) {
+        List<String> lines = config.getStringList(section + ".lines");
+        return lines == null ? new ArrayList<String>() : lines;
+    }
+
+    public String getRawString(String path, String def) {
+        return config.getString(path, def);
     }
 }

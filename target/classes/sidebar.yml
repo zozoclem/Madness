@@ -1,32 +1,34 @@
+enabled: true
+update-ticks: 20
 title: "&6&lMADNESS"
 
 lobby:
   lines:
     - " "
-    - "&a&l%player%"
+    - "&a&l%player_name%"
     - "  &8❙ &7Mode: &aLobby"
-    - "  &8❙ &7Ping: &f%ping%ms"
+    - "  &8❙ &7Ping: &f%player_ping%ms"
     - "&r "
-    - "  &8❙ &7Kills: &a%kills%"
-    - "  &8❙ &7Deaths: &c%deaths%"
-    - "  &8❙ &7Streak: &e%streak%"
+    - "  &8❙ &7Kills: &a%madness_kills%"
+    - "  &8❙ &7Deaths: &c%madness_deaths%"
+    - "  &8❙ &7Streak: &e%madness_streak%"
     - "&8 "
     - " &8▪ &dmadness"
 
 arena:
   lines:
     - " "
-    - "&c&l%player%"
+    - "&c&l%player_name%"
     - "  &8❙ &7Mode: &cArena"
-    - "  &8❙ &7Ping: &f%ping%ms"
+    - "  &8❙ &7Ping: &f%player_ping%ms"
     - "&r "
-    - "  &8❙ &7Kills: &a%kills%"
-    - "  &8❙ &7Deaths: &c%deaths%"
-    - "  &8❙ &7Streak: &e%streak%"
+    - "  &8❙ &7Kills: &a%madness_kills%"
+    - "  &8❙ &7Deaths: &c%madness_deaths%"
+    - "  &8❙ &7Streak: &e%madness_streak%"
     - "%cooldowns%"
     - "&8 "
     - " &8▪ &dmadness"
 
   cooldown-header: " §8❙ §e§lCooldown"
-  tnt-line: "   &8➥ &7TNT: &f%tnt%s"
-  jetpack-line: "   &8➥ &7Jetpack: &f%jetpack%s"
+  tnt-line: "   &8➥ &7TNT: &f%madness_tnt_cooldown%s"
+  jetpack-line: "   &8➥ &7Jetpack: &f%madness_jetpack_cooldown%s"

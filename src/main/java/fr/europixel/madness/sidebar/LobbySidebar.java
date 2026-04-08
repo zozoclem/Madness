@@ -1,7 +1,7 @@
 package fr.europixel.madness.sidebar;
 
 import fr.europixel.madness.MadnessPlugin;
-import fr.europixel.madness.PlayerStats;
+import fr.europixel.madness.model.PlayerStats;
 import org.bukkit.ChatColor;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;

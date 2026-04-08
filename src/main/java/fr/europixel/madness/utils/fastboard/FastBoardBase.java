@@ -112,7 +112,7 @@ public abstract class FastBoardBase<T> {
                     .filter(m -> m.getParameterCount() == 1 && m.getParameterTypes()[0] == packetClass)
                     .findFirst().orElseThrow(NoSuchMethodException::new);
             final Optional<Class<?>> displaySlotEnum = FastReflection.nmsOptionalClass("world.scores", "DisplaySlot");
-            CHAT_COMPONENT_CLASS = FastReflection.nmsClass("network.chat", "IChatBaseComponent");
+            CHAT_COMPONENT_CLASS = FastReflection.nmsClass("network.fr.europixel.madness.chat", "IChatBaseComponent");
             CHAT_FORMAT_ENUM = FastReflection.nmsClass(null, "EnumChatFormat");
             DISPLAY_SLOT_TYPE = displaySlotEnum.orElse(int.class);
             RESET_FORMATTING = FastReflection.enumValueOf(CHAT_FORMAT_ENUM, "RESET", 21);
@@ -123,15 +123,15 @@ public abstract class FastBoardBase<T> {
             PACKET_SB_OBJ = FastReflection.findPacketConstructor(packetSbObjClass, lookup);
             PACKET_SB_DISPLAY_OBJ = FastReflection.findPacketConstructor(packetSbDisplayObjClass, lookup);
 
-            final Optional<Class<?>> numberFormat = FastReflection.nmsOptionalClass("network.chat.numbers", "NumberFormat");
+            final Optional<Class<?>> numberFormat = FastReflection.nmsOptionalClass("network.fr.europixel.madness.chat.numbers", "NumberFormat");
             final MethodHandle packetSbSetScore;
             MethodHandle packetSbResetScore = null;
             MethodHandle fixedFormatConstructor = null;
             Object blankNumberFormat = null;
 
             if (numberFormat.isPresent()) { // 1.20.3
-                final Class<?> blankFormatClass = FastReflection.nmsClass("network.chat.numbers", "BlankFormat");
-                final Class<?> fixedFormatClass = FastReflection.nmsClass("network.chat.numbers", "FixedFormat");
+                final Class<?> blankFormatClass = FastReflection.nmsClass("network.fr.europixel.madness.chat.numbers", "BlankFormat");
+                final Class<?> fixedFormatClass = FastReflection.nmsClass("network.fr.europixel.madness.chat.numbers", "FixedFormat");
                 final Class<?> resetScoreClass = FastReflection.nmsClass(gameProtocolPackage, "ClientboundResetScorePacket");
                 final MethodType setScoreType = MethodType.methodType(void.class, String.class, String.class, int.class, CHAT_COMPONENT_CLASS, numberFormat.get());
                 final MethodType removeScoreType = MethodType.methodType(void.class, String.class, String.class);

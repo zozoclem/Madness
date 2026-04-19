@@ -1,6 +1,7 @@
 package fr.europixel.madness.chat;
 
 import fr.europixel.madness.MadnessPlugin;
+import fr.europixel.madness.model.PlayerStats;
 import fr.europixel.madness.utils.ConfigUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -34,9 +35,19 @@ public class ChatListener implements Listener {
             prefix = "";
         }
 
+        int level = 1;
+        if (plugin.getPlayerStatsManager() != null) {
+            PlayerStats stats = plugin.getPlayerStatsManager().getStats(player);
+            if (stats != null) {
+                level = stats.getLevel();
+            }
+        }
+
+        String star = plugin.getConfig().getString("chat.star-symbol", "✫");
+
         String rawFormat = plugin.getConfig().getString(
                 "chat.format",
-                "%prefix% &7%player% &8» &f%message%"
+                "&8[&b%level%%star%&8] %prefix% &7%player% &8» &f%message%"
         );
 
         String message = event.getMessage();
@@ -44,7 +55,9 @@ public class ChatListener implements Listener {
         String formatted = rawFormat
                 .replace("%prefix%", prefix)
                 .replace("%player%", player.getName())
-                .replace("%message%", message);
+                .replace("%message%", message)
+                .replace("%level%", String.valueOf(level))
+                .replace("%star%", star);
 
         formatted = ConfigUtil.color(formatted).trim();
 

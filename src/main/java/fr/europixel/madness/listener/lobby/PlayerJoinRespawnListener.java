@@ -24,10 +24,26 @@ public class PlayerJoinRespawnListener implements Listener {
         Player player = event.getPlayer();
 
         event.setJoinMessage(null);
-        plugin.getRechargeManager().clear(player);
-        plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
-        plugin.getLobbyManager().sendToLobby(player);
-        plugin.getPlayerStatsManager().loadPlayer(player);
+
+        if (plugin.getLastDamagerManager() != null) {
+            plugin.getLastDamagerManager().clear(player);
+        }
+
+        if (plugin.getRechargeManager() != null) {
+            plugin.getRechargeManager().clear(player);
+        }
+
+        if (plugin.getPlayerModeManager() != null) {
+            plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
+        }
+
+        if (plugin.getLobbyManager() != null) {
+            plugin.getLobbyManager().sendToLobby(player);
+        }
+
+        if (plugin.getPlayerStatsManager() != null) {
+            plugin.getPlayerStatsManager().loadPlayer(player);
+        }
     }
 
     @EventHandler
@@ -35,9 +51,22 @@ public class PlayerJoinRespawnListener implements Listener {
         Player player = event.getPlayer();
 
         event.setQuitMessage(null);
-        plugin.getRechargeManager().clear(event.getPlayer());
-        plugin.getPlayerModeManager().remove(event.getPlayer());
-        plugin.getPlayerStatsManager().unloadPlayer(player);
+
+        if (plugin.getLastDamagerManager() != null) {
+            plugin.getLastDamagerManager().clear(player);
+        }
+
+        if (plugin.getRechargeManager() != null) {
+            plugin.getRechargeManager().clear(player);
+        }
+
+        if (plugin.getPlayerModeManager() != null) {
+            plugin.getPlayerModeManager().remove(player);
+        }
+
+        if (plugin.getPlayerStatsManager() != null) {
+            plugin.getPlayerStatsManager().unloadPlayer(player);
+        }
     }
 
     @EventHandler
@@ -48,8 +77,17 @@ public class PlayerJoinRespawnListener implements Listener {
 
         final Player player = event.getEntity();
 
-        plugin.getRechargeManager().clear(player);
-        plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
+        if (plugin.getLastDamagerManager() != null) {
+            plugin.getLastDamagerManager().clear(player);
+        }
+
+        if (plugin.getRechargeManager() != null) {
+            plugin.getRechargeManager().clear(player);
+        }
+
+        if (plugin.getPlayerModeManager() != null) {
+            plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
+        }
 
         Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
@@ -65,15 +103,31 @@ public class PlayerJoinRespawnListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         final Player player = event.getPlayer();
 
+        if (plugin.getLastDamagerManager() != null) {
+            plugin.getLastDamagerManager().clear(player);
+        }
+
         event.setRespawnLocation(plugin.getLobbyManager().getLobbySpawn());
 
         Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {
                 if (player != null && player.isOnline()) {
-                    plugin.getRechargeManager().clear(player);
-                    plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
-                    plugin.getLobbyManager().sendToLobby(player);
+                    if (plugin.getLastDamagerManager() != null) {
+                        plugin.getLastDamagerManager().clear(player);
+                    }
+
+                    if (plugin.getRechargeManager() != null) {
+                        plugin.getRechargeManager().clear(player);
+                    }
+
+                    if (plugin.getPlayerModeManager() != null) {
+                        plugin.getPlayerModeManager().setMode(player, PlayerMode.LOBBY);
+                    }
+
+                    if (plugin.getLobbyManager() != null) {
+                        plugin.getLobbyManager().sendToLobby(player);
+                    }
                 }
             }
         }, 1L);

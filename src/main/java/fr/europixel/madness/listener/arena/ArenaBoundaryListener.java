@@ -26,9 +26,9 @@ public class ArenaBoundaryListener implements Listener {
             return;
         }
 
-        Player player = event.getPlayer();
+        Player victim = event.getPlayer();
 
-        if (!plugin.getPlayerModeManager().isInArena(player)) {
+        if (!plugin.getPlayerModeManager().isInArena(victim)) {
             return;
         }
 
@@ -40,6 +40,14 @@ public class ArenaBoundaryListener implements Listener {
             return;
         }
 
-        player.setHealth(0.0D);
+        if (plugin.getArenaEliminationManager().isProcessing(victim)) {
+            return;
+        }
+
+        Player killer = plugin.getLastDamagerManager() == null
+                ? null
+                : plugin.getLastDamagerManager().getLastDamager(victim);
+
+        plugin.getArenaEliminationManager().eliminate(victim, killer);
     }
 }

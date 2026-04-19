@@ -24,26 +24,89 @@ public class BlockShopListener implements Listener {
             return;
         }
 
-        if (!BlockShopMenu.getTitle(plugin).equals(event.getView().getTitle())) {
-            return;
-        }
-
-        event.setCancelled(true);
-
+        String title = event.getView().getTitle();
         Player player = (Player) event.getWhoClicked();
-        int rawSlot = event.getRawSlot();
 
-        if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
+        if (ShopCategoryMenu.getTitle(plugin).equals(title)) {
+            event.setCancelled(true);
+
+            int rawSlot = event.getRawSlot();
+            if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
+                return;
+            }
+
+            int blocksSlot = plugin.getConfig().getInt("shop-categories.blocks.slot", 10);
+            int upgradesSlot = plugin.getConfig().getInt("shop-categories.upgrades.slot", 13);
+            int tntEffectsSlot = plugin.getConfig().getInt("shop-categories.tnt-effects.slot", 16);
+
+            if (rawSlot == blocksSlot) {
+                BlockShopMenu.open(plugin, player);
+                return;
+            }
+
+            if (rawSlot == upgradesSlot) {
+                UpgradeShopMenu.open(plugin, player);
+                return;
+            }
+
+            if (rawSlot == tntEffectsSlot) {
+                TntEffectShopMenu.open(plugin, player);
+            }
             return;
         }
 
-        String optionId = plugin.getBlockShopManager().getOptionIdBySlot(rawSlot);
-        if (optionId == null) {
+        if (BlockShopMenu.getTitle(plugin).equals(title)) {
+            event.setCancelled(true);
+
+            int rawSlot = event.getRawSlot();
+            if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
+                return;
+            }
+
+            String optionId = plugin.getBlockShopManager().getOptionIdBySlot(rawSlot);
+            if (optionId == null) {
+                return;
+            }
+
+            plugin.getBlockShopManager().handleClick(player, optionId);
+            BlockShopMenu.open(plugin, player);
             return;
         }
 
-        plugin.getBlockShopManager().handleClick(player, optionId);
-        BlockShopMenu.open(plugin, player);
+        if (UpgradeShopMenu.getTitle(plugin).equals(title)) {
+            event.setCancelled(true);
+
+            int rawSlot = event.getRawSlot();
+            if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
+                return;
+            }
+
+            String upgradeId = plugin.getUpgradeShopManager().getUpgradeIdBySlot(rawSlot);
+            if (upgradeId == null) {
+                return;
+            }
+
+            plugin.getUpgradeShopManager().handleClick(player, upgradeId);
+            UpgradeShopMenu.open(plugin, player);
+            return;
+        }
+
+        if (TntEffectShopMenu.getTitle(plugin).equals(title)) {
+            event.setCancelled(true);
+
+            int rawSlot = event.getRawSlot();
+            if (rawSlot < 0 || rawSlot >= event.getView().getTopInventory().getSize()) {
+                return;
+            }
+
+            String effectId = plugin.getTntEffectShopManager().getEffectIdBySlot(rawSlot);
+            if (effectId == null) {
+                return;
+            }
+
+            plugin.getTntEffectShopManager().handleClick(player, effectId);
+            TntEffectShopMenu.open(plugin, player);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -52,7 +115,12 @@ public class BlockShopListener implements Listener {
             return;
         }
 
-        if (!BlockShopMenu.getTitle(plugin).equals(event.getView().getTitle())) {
+        String title = event.getView().getTitle();
+
+        if (!ShopCategoryMenu.getTitle(plugin).equals(title)
+                && !BlockShopMenu.getTitle(plugin).equals(title)
+                && !UpgradeShopMenu.getTitle(plugin).equals(title)
+                && !TntEffectShopMenu.getTitle(plugin).equals(title)) {
             return;
         }
 

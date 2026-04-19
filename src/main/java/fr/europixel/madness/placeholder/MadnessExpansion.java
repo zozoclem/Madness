@@ -99,8 +99,8 @@ public class MadnessExpansion extends PlaceholderExpansion {
         if (params.equalsIgnoreCase("has_cooldowns")) {
             if (plugin.getRechargeManager() == null) return "false";
 
-            int tnt = plugin.getRechargeManager().getRemainingTntSeconds(player);
-            int jetpack = plugin.getRechargeManager().getRemainingJetpackSeconds(player);
+            double tnt = plugin.getRechargeManager().getRemainingTntSeconds(player);
+            double jetpack = plugin.getRechargeManager().getRemainingJetpackSeconds(player);
 
             return (tnt > 0 || jetpack > 0) ? "true" : "false";
         }

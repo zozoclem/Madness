@@ -1,11 +1,11 @@
 package fr.europixel.madness.manager;
 
+import fr.europixel.madness.MadnessPlugin;
 import fr.europixel.madness.item.CooldownItemFactory;
 import fr.europixel.madness.item.ItemFactory;
-import fr.europixel.madness.MadnessPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +18,6 @@ public class ItemRechargeManager {
     private final Map<UUID, Long> tntCooldowns = new HashMap<UUID, Long>();
     private final Map<UUID, Long> jetpackCooldowns = new HashMap<UUID, Long>();
 
-    private final Map<UUID, BukkitTask> tntTasks = new HashMap<UUID, BukkitTask>();
-    private final Map<UUID, BukkitTask> jetpackTasks = new HashMap<UUID, BukkitTask>();
-
     private final Map<UUID, Integer> tntSlots = new HashMap<UUID, Integer>();
     private final Map<UUID, Integer> jetpackSlots = new HashMap<UUID, Integer>();
 
@@ -28,69 +25,11 @@ public class ItemRechargeManager {
         this.plugin = plugin;
     }
 
-    public void startTntRecharge(final Player player, final int seconds) {
-        clearTnt(player);
-
-        final UUID uuid = player.getUniqueId();
-        final int slot = player.getInventory().getHeldItemSlot();
-        final long end = System.currentTimeMillis() + (seconds * 1000L);
-
-        tntCooldowns.put(uuid, end);
-        tntSlots.put(uuid, slot);
-
-        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.tnt", seconds));
-        player.updateInventory();
-
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-            @Override
-            public void run() {
-                tntCooldowns.remove(uuid);
-                tntTasks.remove(uuid);
-
-                Integer savedSlot = tntSlots.remove(uuid);
-
-                if (player.isOnline() && savedSlot != null) {
-                    player.getInventory().setItem(savedSlot, ItemFactory.createTntItem());
-                    player.updateInventory();
-                }
-            }
-        }, seconds * 20L);
-
-        tntTasks.put(uuid, task);
-    }
-
-    public void startJetpackRecharge(final Player player, final int seconds) {
-        clearJetpack(player);
-
-        final UUID uuid = player.getUniqueId();
-        final int slot = player.getInventory().getHeldItemSlot();
-        final long end = System.currentTimeMillis() + (seconds * 1000L);
-
-        jetpackCooldowns.put(uuid, end);
-        jetpackSlots.put(uuid, slot);
-
-        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.jetpack", seconds));
-        player.updateInventory();
-
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-            @Override
-            public void run() {
-                jetpackCooldowns.remove(uuid);
-                jetpackTasks.remove(uuid);
-
-                Integer savedSlot = jetpackSlots.remove(uuid);
-
-                if (player.isOnline() && savedSlot != null) {
-                    player.getInventory().setItem(savedSlot, ItemFactory.createJetpackItem());
-                    player.updateInventory();
-                }
-            }
-        }, seconds * 20L);
-
-        jetpackTasks.put(uuid, task);
-    }
-
     public boolean isTntOnCooldown(Player player) {
+        if (player == null) {
+            return false;
+        }
+
         Long end = tntCooldowns.get(player.getUniqueId());
         if (end == null) {
             return false;
@@ -98,7 +37,7 @@ public class ItemRechargeManager {
 
         if (end <= System.currentTimeMillis()) {
             tntCooldowns.remove(player.getUniqueId());
-            tntSlots.remove(player.getUniqueId());
+            restoreTnt(player);
             return false;
         }
 
@@ -106,6 +45,10 @@ public class ItemRechargeManager {
     }
 
     public boolean isJetpackOnCooldown(Player player) {
+        if (player == null) {
+            return false;
+        }
+
         Long end = jetpackCooldowns.get(player.getUniqueId());
         if (end == null) {
             return false;
@@ -113,51 +56,121 @@ public class ItemRechargeManager {
 
         if (end <= System.currentTimeMillis()) {
             jetpackCooldowns.remove(player.getUniqueId());
-            jetpackSlots.remove(player.getUniqueId());
+            restoreJetpack(player);
             return false;
         }
 
         return true;
     }
 
-    public int getRemainingTntSeconds(Player player) {
+    public void startTntRecharge(final Player player, final double seconds) {
+        if (player == null) {
+            return;
+        }
+
+        int slot = findTntSlot(player);
+        if (slot < 0) {
+            slot = player.getInventory().getHeldItemSlot();
+        }
+
+        tntSlots.put(player.getUniqueId(), slot);
+
+        final long end = System.currentTimeMillis() + (long) Math.ceil(seconds * 1000.0D);
+        tntCooldowns.put(player.getUniqueId(), end);
+
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.tnt", (int) Math.ceil(seconds)));
+        player.updateInventory();
+
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                tntCooldowns.remove(player.getUniqueId());
+                restoreTnt(player);
+            }
+        }, (long) Math.ceil(seconds * 20.0D));
+    }
+
+    public void startJetpackRecharge(final Player player, final double seconds) {
+        if (player == null) {
+            return;
+        }
+
+        int slot = findJetpackSlot(player);
+        if (slot < 0) {
+            slot = player.getInventory().getHeldItemSlot();
+        }
+
+        jetpackSlots.put(player.getUniqueId(), slot);
+
+        final long end = System.currentTimeMillis() + (long) Math.ceil(seconds * 1000.0D);
+        jetpackCooldowns.put(player.getUniqueId(), end);
+
+        player.getInventory().setItem(slot, CooldownItemFactory.createBarrier("cooldowns.jetpack", (int) Math.ceil(seconds)));
+        player.updateInventory();
+
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                jetpackCooldowns.remove(player.getUniqueId());
+                restoreJetpack(player);
+            }
+        }, (long) Math.ceil(seconds * 20.0D));
+    }
+
+    public double getRemainingTntSeconds(Player player) {
+        if (player == null) {
+            return 0.0D;
+        }
+
         Long end = tntCooldowns.get(player.getUniqueId());
         if (end == null) {
-            return 0;
+            return 0.0D;
         }
 
         long remaining = end - System.currentTimeMillis();
         if (remaining <= 0L) {
-            return 0;
+            return 0.0D;
         }
 
-        return (int) Math.ceil(remaining / 1000.0D);
+        return remaining / 1000.0D;
     }
 
-    public int getRemainingJetpackSeconds(Player player) {
+    public double getRemainingJetpackSeconds(Player player) {
+        if (player == null) {
+            return 0.0D;
+        }
+
         Long end = jetpackCooldowns.get(player.getUniqueId());
         if (end == null) {
-            return 0;
+            return 0.0D;
         }
 
         long remaining = end - System.currentTimeMillis();
         if (remaining <= 0L) {
-            return 0;
+            return 0.0D;
         }
 
-        return (int) Math.ceil(remaining / 1000.0D);
+        return remaining / 1000.0D;
     }
 
-    public float getTntProgress(Player player, int maxSeconds) {
+    public float getTntProgress(Player player, double maxSeconds) {
+        if (player == null) {
+            return 0.0F;
+        }
+
         return getProgress(tntCooldowns.get(player.getUniqueId()), maxSeconds);
     }
 
-    public float getJetpackProgress(Player player, int maxSeconds) {
+    public float getJetpackProgress(Player player, double maxSeconds) {
+        if (player == null) {
+            return 0.0F;
+        }
+
         return getProgress(jetpackCooldowns.get(player.getUniqueId()), maxSeconds);
     }
 
-    private float getProgress(Long end, int maxSeconds) {
-        if (end == null || maxSeconds <= 0) {
+    private float getProgress(Long end, double maxSeconds) {
+        if (end == null || maxSeconds <= 0.0D) {
             return 0.0F;
         }
 
@@ -166,77 +179,145 @@ public class ItemRechargeManager {
             return 0.0F;
         }
 
-        float progress = (float) remaining / (float) (maxSeconds * 1000L);
+        float progress = (float) (remaining / (maxSeconds * 1000.0D));
         return Math.max(0.0F, Math.min(1.0F, progress));
     }
 
+    public Integer getTntSlot(Player player) {
+        if (player == null) {
+            return null;
+        }
+        return tntSlots.get(player.getUniqueId());
+    }
+
+    public Integer getJetpackSlot(Player player) {
+        if (player == null) {
+            return null;
+        }
+        return jetpackSlots.get(player.getUniqueId());
+    }
+
     public void resetTnt(Player player) {
-        UUID uuid = player.getUniqueId();
-        Integer slot = tntSlots.get(uuid);
-
-        clearTnt(player);
-
-        if (slot == null) {
-            slot = findItemSlot(player, "tnt");
+        if (player == null) {
+            return;
         }
 
-        if (slot != null) {
-            player.getInventory().setItem(slot, ItemFactory.createTntItem());
-            player.updateInventory();
-        }
+        tntCooldowns.remove(player.getUniqueId());
+        restoreTnt(player);
     }
 
     public void resetJetpack(Player player) {
-        UUID uuid = player.getUniqueId();
-        Integer slot = jetpackSlots.get(uuid);
-
-        clearJetpack(player);
-
-        if (slot == null) {
-            slot = findItemSlot(player, "jetpack");
+        if (player == null) {
+            return;
         }
 
-        if (slot != null) {
-            player.getInventory().setItem(slot, ItemFactory.createJetpackItem());
-            player.updateInventory();
-        }
+        jetpackCooldowns.remove(player.getUniqueId());
+        restoreJetpack(player);
     }
 
     public void clear(Player player) {
-        clearTnt(player);
-        clearJetpack(player);
-    }
+        if (player == null) {
+            return;
+        }
 
-    private void clearTnt(Player player) {
         UUID uuid = player.getUniqueId();
 
         tntCooldowns.remove(uuid);
-        tntSlots.remove(uuid);
-
-        BukkitTask task = tntTasks.remove(uuid);
-        if (task != null) {
-            task.cancel();
-        }
-    }
-
-    private void clearJetpack(Player player) {
-        UUID uuid = player.getUniqueId();
-
         jetpackCooldowns.remove(uuid);
-        jetpackSlots.remove(uuid);
 
-        BukkitTask task = jetpackTasks.remove(uuid);
-        if (task != null) {
-            task.cancel();
-        }
+        tntSlots.remove(uuid);
+        jetpackSlots.remove(uuid);
     }
 
-    private Integer findItemSlot(Player player, String configKey) {
+    private void restoreTnt(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        Integer slot = tntSlots.get(player.getUniqueId());
+        if (slot == null || slot < 0 || slot > 8) {
+            return;
+        }
+
+        player.getInventory().setItem(slot, buildItemFromConfig("items.tnt"));
+        player.updateInventory();
+    }
+
+    private void restoreJetpack(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        Integer slot = jetpackSlots.get(player.getUniqueId());
+        if (slot == null || slot < 0 || slot > 8) {
+            return;
+        }
+
+        player.getInventory().setItem(slot, buildItemFromConfig("items.jetpack"));
+        player.updateInventory();
+    }
+
+    private int findTntSlot(Player player) {
         for (int i = 0; i < 9; i++) {
-            if (ItemFactory.isSimilarKeyItem(player.getInventory().getItem(i), configKey)) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (ItemFactory.isSimilarKeyItem(item, "tnt")) {
                 return i;
             }
         }
-        return null;
+
+        Integer saved = tntSlots.get(player.getUniqueId());
+        return saved == null ? -1 : saved;
+    }
+
+    private int findJetpackSlot(Player player) {
+        for (int i = 0; i < 9; i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (ItemFactory.isSimilarKeyItem(item, "jetpack")) {
+                return i;
+            }
+        }
+
+        Integer saved = jetpackSlots.get(player.getUniqueId());
+        return saved == null ? -1 : saved;
+    }
+
+    private ItemStack buildItemFromConfig(String path) {
+        if (plugin == null) {
+            return null;
+        }
+
+        String materialName = plugin.getConfig().getString(path + ".material", "STONE");
+        int amount = plugin.getConfig().getInt(path + ".amount", 1);
+
+        org.bukkit.Material material;
+        try {
+            material = org.bukkit.Material.valueOf(materialName.toUpperCase());
+        } catch (Exception e) {
+            material = org.bukkit.Material.STONE;
+        }
+
+        ItemStack item = new ItemStack(material, Math.max(1, amount));
+
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+
+            String name = plugin.getConfig().getString(path + ".name");
+            if (name != null) {
+                meta.setDisplayName(fr.europixel.madness.utils.ConfigUtil.color(name));
+            }
+
+            java.util.List<String> lore = plugin.getConfig().getStringList(path + ".lore");
+            if (lore != null && !lore.isEmpty()) {
+                java.util.List<String> colored = new java.util.ArrayList<String>();
+                for (String line : lore) {
+                    colored.add(fr.europixel.madness.utils.ConfigUtil.color(line));
+                }
+                meta.setLore(colored);
+            }
+
+            item.setItemMeta(meta);
+        }
+
+        return item;
     }
 }

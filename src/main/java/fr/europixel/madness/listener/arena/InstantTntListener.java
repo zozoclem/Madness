@@ -1,7 +1,7 @@
 package fr.europixel.madness.listener.arena;
 
-import fr.europixel.madness.item.ItemFactory;
 import fr.europixel.madness.MadnessPlugin;
+import fr.europixel.madness.item.ItemFactory;
 import net.minecraft.server.v1_8_R3.PacketPlayOutExplosion;
 import net.minecraft.server.v1_8_R3.Vec3D;
 import org.bukkit.Location;
@@ -44,7 +44,11 @@ public class InstantTntListener implements Listener {
         double power = plugin.getConfig().getDouble("tnt.power", -3.6D);
         double minY = plugin.getConfig().getDouble("tnt.min-y", 1.0D);
 
-        Location loc = block.getLocation();
+        Location loc = block.getLocation().add(0.5D, 0.5D, 0.5D);
+
+        if (plugin.getTntEffectManager() != null) {
+            plugin.getTntEffectManager().playSelectedEffect(player, loc);
+        }
 
         Vector v = player.getLocation().getDirection().multiply(power);
         if (v.getY() <= 0.0D) {
@@ -62,7 +66,11 @@ public class InstantTntListener implements Listener {
 
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
 
-        plugin.getRechargeManager().startTntRecharge(player, plugin.getConfig().getInt("tnt.recharge", 10));
+        double recharge = plugin.getUpgradeShopManager() == null
+                ? plugin.getConfig().getDouble("upgrade-shop.upgrades.tnt_cooldown.base-value", 10.0D)
+                : plugin.getUpgradeShopManager().getTntRechargeSeconds(player);
+
+        plugin.getRechargeManager().startTntRecharge(player, recharge);
         player.updateInventory();
     }
 }

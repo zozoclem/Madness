@@ -24,15 +24,25 @@ public class VoidDeathListener implements Listener {
             return;
         }
 
-        Player player = (Player) event.getEntity();
+        Player victim = (Player) event.getEntity();
+        event.setCancelled(true);
 
-        if (!plugin.getPlayerModeManager().isInArena(player)) {
-            event.setCancelled(true);
-            player.teleport(plugin.getLobbyManager().getLobbySpawn());
+        if (!plugin.getPlayerModeManager().isInArena(victim)) {
+            if (plugin.getLastDamagerManager() != null) {
+                plugin.getLastDamagerManager().clear(victim);
+            }
+            plugin.getLobbyManager().sendToLobby(victim);
             return;
         }
 
-        event.setCancelled(true);
-        player.setHealth(0.0D);
+        if (plugin.getArenaEliminationManager().isProcessing(victim)) {
+            return;
+        }
+
+        Player killer = plugin.getLastDamagerManager() == null
+                ? null
+                : plugin.getLastDamagerManager().getLastDamager(victim);
+
+        plugin.getArenaEliminationManager().eliminate(victim, killer);
     }
 }

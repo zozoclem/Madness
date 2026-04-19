@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 public class BlockShopMenu {
 
     public static String getTitle(MadnessPlugin plugin) {
-        return ConfigUtil.color(plugin.getConfig().getString("block-shop.title", "&6Block Shop"));
+        return ConfigUtil.color(plugin.getConfig().getString("block-shop.title", "&6Shop - Blocs"));
     }
 
     public static void open(MadnessPlugin plugin, Player player) {

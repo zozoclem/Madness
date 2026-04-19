@@ -31,10 +31,18 @@ public class LevelManager {
     }
 
     public void rewardKill(Player player) {
-        addXp(player, getKillXp());
+        rewardKill(player, true);
+    }
+
+    public void rewardKill(Player player, boolean showActionBar) {
+        addXp(player, getKillXp(), showActionBar);
     }
 
     public void addXp(Player player, int amount) {
+        addXp(player, amount, true);
+    }
+
+    public void addXp(Player player, int amount, boolean showActionBar) {
         if (player == null || amount <= 0) {
             return;
         }
@@ -46,11 +54,13 @@ public class LevelManager {
 
         stats.addXp(amount);
 
-        String xpMessage = plugin.getConfig().getString("levels.xp-actionbar", "&b+%xp% xp");
-        if (xpMessage != null && !xpMessage.trim().isEmpty()) {
-            ActionBarUtil.sendActionBar(player, ConfigUtil.color(
-                    xpMessage.replace("%xp%", String.valueOf(amount))
-            ));
+        if (showActionBar) {
+            String xpMessage = plugin.getConfig().getString("levels.xp-actionbar", "&b+%xp% xp");
+            if (xpMessage != null && !xpMessage.trim().isEmpty()) {
+                ActionBarUtil.sendActionBar(player, ConfigUtil.color(
+                        xpMessage.replace("%xp%", String.valueOf(amount))
+                ));
+            }
         }
 
         boolean leveledUp = false;
@@ -61,7 +71,11 @@ public class LevelManager {
             stats.setLevel(stats.getLevel() + 1);
             leveledUp = true;
 
-            String levelUpMessage = plugin.getConfig().getString("levels.level-up-message", "&aLevel up! &7You are now level &e%level%");
+            String levelUpMessage = plugin.getConfig().getString(
+                    "levels.level-up-message",
+                    "&aLevel up! &7You are now level &e%level%"
+            );
+
             player.sendMessage(ConfigUtil.color(
                     levelUpMessage.replace("%level%", String.valueOf(stats.getLevel()))
             ));
@@ -73,7 +87,11 @@ public class LevelManager {
         }
 
         if (leveledUp) {
-            String levelUpActionBar = plugin.getConfig().getString("levels.level-up-actionbar", "&aLevel &e%level%&a!");
+            String levelUpActionBar = plugin.getConfig().getString(
+                    "levels.level-up-actionbar",
+                    "&aLevel &e%level%&a!"
+            );
+
             ActionBarUtil.sendActionBar(player, ConfigUtil.color(
                     levelUpActionBar.replace("%level%", String.valueOf(stats.getLevel()))
             ));

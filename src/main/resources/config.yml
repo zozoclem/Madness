@@ -9,6 +9,9 @@ messages:
     not-enough: "&cYou do not have enough coins."
     purchase-failed: "&cPurchase failed."
     no-economy: "&cEconomy is unavailable."
+    upgrade-bought: "&aTu as acheté &f%upgrade% &aniveau &e%level%&a pour &6%price% coins&a."
+    upgrade-level-required: "&cIl te faut le niveau &e%level% &cpour acheter cette amélioration."
+    upgrade-maxed: "&aCette amélioration est déjà au niveau maximum."
   commands:
     player-only: "&cPlayer-only command."
     no-permission: "&cYou don't have permission."
@@ -28,8 +31,12 @@ messages:
 
 chat:
   enabled: true
-  format: "%prefix% &7%player% &8» &f%message%"
+  star-symbol: "✫"
+  format: "&8[&7%level%%star%&8] %prefix%%player% &8» &f%message%"
 
+cooldown-header: "&eCooldowns"
+tnt-line: "&cTNT: &f%tnt%s"
+jetpack-line: "&bJetpack: &f%jetpack%s"
 
 player-reset:
   health: 20.0
@@ -60,6 +67,13 @@ tnt:
   power: -3.6
   min-y: 1.0
   recharge: 10
+  effects:
+    explosion-sound-volume: 2.5
+    explosion-sound-pitch: 1.15
+    fuse-sound-volume: 1.4
+    fuse-sound-pitch: 1.35
+    ignite-sound-volume: 1.2
+    ignite-sound-pitch: 1.8
 
 jetpack:
   y: 3.6
@@ -259,6 +273,127 @@ editkit-menu:
       lore:
         - "&7Click to cancel"
         - "&7changes."
+
+shop-categories:
+  title: "&6Shop"
+  size: 27
+
+  filler:
+    material: STAINED_GLASS_PANE
+    data: 15
+    amount: 1
+    name: " "
+
+  blocks:
+    slot: 11
+    item:
+      material: SANDSTONE
+      amount: 1
+      name: "&eBlocs"
+      lore:
+        - "&7Choisis et achète tes blocs."
+
+  upgrades:
+    slot: 15
+    item:
+      material: REDSTONE
+      amount: 1
+      name: "&bAméliorations"
+      lore:
+        - "&7Réduis tes cooldowns"
+        - "&7et améliore ton kit."
+
+upgrade-shop:
+  title: "&6Shop - Améliorations"
+  size: 27
+
+  filler:
+    material: STAINED_GLASS_PANE
+    data: 11
+    amount: 1
+    name: " "
+
+  upgrades:
+    tnt_cooldown:
+      slot: 10
+      material: TNT
+      amount: 1
+      name: "&cTNT Cooldown"
+      lore:
+        - "&7Réduit le cooldown de la TNT."
+        - "&7Chaque niveau: &e-0.5 seconde"
+      max-level: 5
+      base-value: 10.0
+      value-per-level: -0.5
+      min-value: 7.5
+      tiers:
+        1:
+          required-level: 5
+          price: 500
+        2:
+          required-level: 10
+          price: 1000
+        3:
+          required-level: 15
+          price: 1500
+        4:
+          required-level: 20
+          price: 2000
+        5:
+          required-level: 25
+          price: 3000
+
+    jetpack_cooldown:
+      slot: 13
+      material: FIREWORK
+      amount: 1
+      name: "&bJetpack Cooldown"
+      lore:
+        - "&7Réduit le cooldown du jetpack."
+        - "&7Chaque niveau: &e-2 secondes"
+      max-level: 5
+      base-value: 60.0
+      value-per-level: -2.0
+      min-value: 50.0
+      tiers:
+        1:
+          required-level: 8
+          price: 700
+        2:
+          required-level: 12
+          price: 1200
+        3:
+          required-level: 16
+          price: 1800
+        4:
+          required-level: 20
+          price: 2500
+        5:
+          required-level: 25
+          price: 3500
+
+    golden_apples:
+      slot: 16
+      material: GOLDEN_APPLE
+      amount: 1
+      name: "&6Pommes d'or"
+      lore:
+        - "&7Commence la partie avec"
+        - "&e+1 pomme d'or &7par niveau."
+      max-level: 3
+      base-value: 0
+      value-per-level: 1
+      max-value: 3
+      tiers:
+        1:
+          required-level: 4
+          price: 400
+        2:
+          required-level: 9
+          price: 900
+        3:
+          required-level: 14
+          price: 1600
 
 block-shop:
   title: "&6Block Shop"

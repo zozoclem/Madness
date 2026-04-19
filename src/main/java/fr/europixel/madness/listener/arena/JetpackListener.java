@@ -46,7 +46,11 @@ public class JetpackListener implements Listener {
 
         player.setVelocity(v);
 
-        plugin.getRechargeManager().startJetpackRecharge(player, plugin.getConfig().getInt("jetpack.recharge", 60));
+        double recharge = plugin.getUpgradeShopManager() == null
+                ? plugin.getConfig().getDouble("upgrade-shop.upgrades.jetpack_cooldown.base-value", 60.0D)
+                : plugin.getUpgradeShopManager().getJetpackRechargeSeconds(player);
+
+        plugin.getRechargeManager().startJetpackRecharge(player, recharge);
         player.updateInventory();
     }
 }

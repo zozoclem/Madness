@@ -23,13 +23,21 @@ public class KillListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
+
+        if (plugin.getPlayerModeManager().isInArena(victim)) {
+            return;
+        }
+
         Player killer = victim.getKiller();
 
         plugin.getPlayerStatsManager().addDeath(victim);
 
         if (killer == null) {
             sendDeathActionBar(victim, null);
-            plugin.getSidebarManager().update(victim);
+
+            if (plugin.getSidebarManager() != null) {
+                plugin.getSidebarManager().update(victim);
+            }
             return;
         }
 
@@ -40,15 +48,17 @@ public class KillListener implements Listener {
         plugin.getRechargeManager().resetTnt(killer);
         plugin.getRechargeManager().resetJetpack(killer);
 
-        sendKillActionBar(killer, victim);
-        sendDeathActionBar(victim, killer);
         rewardCoins(killer);
         rewardXp(killer);
 
+        sendKillActionBar(killer, victim);
+        sendDeathActionBar(victim, killer);
         broadcastKillStreak(killer);
 
-        plugin.getSidebarManager().update(killer);
-        plugin.getSidebarManager().update(victim);
+        if (plugin.getSidebarManager() != null) {
+            plugin.getSidebarManager().update(killer);
+            plugin.getSidebarManager().update(victim);
+        }
     }
 
     private void healInstant(Player killer) {
@@ -59,6 +69,9 @@ public class KillListener implements Listener {
         if (newHealth > maxHealth) {
             newHealth = maxHealth;
         }
+        if (newHealth > killer.getMaxHealth()) {
+            newHealth = killer.getMaxHealth();
+        }
 
         killer.setHealth(newHealth);
 
@@ -68,27 +81,46 @@ public class KillListener implements Listener {
     }
 
     private void giveRewardItem(Player killer) {
-        Material material = ConfigUtil.getMaterial(
-                plugin.getConfig().getString("kill-rewards.item.material"),
-                Material.GOLDEN_APPLE
-        );
-        int amount = plugin.getConfig().getInt("kill-rewards.item.amount", 1);
+        String materialName = plugin.getConfig().getString("kill-rewards.item.material", "GOLDEN_APPLE");
+        Material material = Material.matchMaterial(materialName);
+        if (material == null) {
+            material = Material.GOLDEN_APPLE;
+        }
 
+        int amount = plugin.getConfig().getInt("kill-rewards.item.amount", 1);
         killer.getInventory().addItem(new ItemStack(material, amount));
         killer.updateInventory();
     }
 
     private void sendKillActionBar(Player killer, Player victim) {
-        String killTemplate = plugin.getConfig().getString("kill-rewards.actionbar", "&aYou killed &f%victim%");
-        String killMessage = ConfigUtil.color(killTemplate.replace("%victim%", victim.getName()));
+        String killTemplate = plugin.getConfig().getString(
+                "kill-rewards.actionbar",
+                "&aYou killed &f%victim%"
+        );
+
+        StringBuilder message = new StringBuilder();
+        message.append(ConfigUtil.color(killTemplate.replace("%victim%", victim.getName())));
 
         if (plugin.getCoinRewardManager() != null && plugin.getCoinRewardManager().isEnabled()) {
             String coinMessage = plugin.getCoinRewardManager().buildActionBar(killer);
-            ActionBarUtil.sendActionBar(killer, killMessage + ConfigUtil.color(" &8| ") + coinMessage);
-            return;
+            if (coinMessage != null && !coinMessage.trim().isEmpty()) {
+                message.append(ConfigUtil.color(" &8| "));
+                message.append(coinMessage);
+            }
         }
 
-        ActionBarUtil.sendActionBar(killer, killMessage);
+        if (plugin.getLevelManager() != null) {
+            int xp = plugin.getLevelManager().getKillXp();
+            if (xp > 0) {
+                String xpTemplate = plugin.getConfig().getString("levels.xp-actionbar", "&b+%xp% xp");
+                message.append(ConfigUtil.color(" &8| "));
+                message.append(ConfigUtil.color(
+                        xpTemplate.replace("%xp%", String.valueOf(xp))
+                ));
+            }
+        }
+
+        ActionBarUtil.sendActionBar(killer, message.toString());
     }
 
     private void sendDeathActionBar(Player victim, Player killer) {
@@ -117,7 +149,7 @@ public class KillListener implements Listener {
             return;
         }
 
-        plugin.getLevelManager().rewardKill(killer);
+        plugin.getLevelManager().rewardKill(killer, false);
     }
 
     private void broadcastKillStreak(Player killer) {

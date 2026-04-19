@@ -1,13 +1,10 @@
 package fr.europixel.madness.bar;
 
-import fr.europixel.madness.utils.ConfigUtil;
 import fr.europixel.madness.MadnessPlugin;
 import fr.europixel.madness.item.ItemFactory;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class CooldownBarListener implements Listener {
@@ -18,19 +15,11 @@ public class CooldownBarListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
-    public void onHeld(PlayerItemHeldEvent event) {
-        final Player player = event.getPlayer();
-
-        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-            @Override
-            public void run() {
-                updateBar(player);
-            }
-        }, 1L);
-    }
-
     public void updateBar(Player player) {
+        if (player == null || plugin.getRechargeManager() == null) {
+            return;
+        }
+
         ItemStack item = player.getItemInHand();
 
         if (item == null || item.getType() == Material.AIR) {
@@ -38,17 +27,42 @@ public class CooldownBarListener implements Listener {
             return;
         }
 
-        int tntMax = plugin.getConfig().getInt("tnt.recharge", 10);
-        int jetpackMax = plugin.getConfig().getInt("jetpack.recharge", 60);
+        double tntMax = plugin.getUpgradeShopManager() == null
+                ? plugin.getConfig().getDouble("tnt.recharge", 10.0D)
+                : plugin.getUpgradeShopManager().getTntRechargeSeconds(player);
 
-        if (isTntItem(item) && plugin.getRechargeManager().isTntOnCooldown(player)) {
-            player.setLevel(plugin.getRechargeManager().getRemainingTntSeconds(player));
+        double jetpackMax = plugin.getUpgradeShopManager() == null
+                ? plugin.getConfig().getDouble("jetpack.recharge", 60.0D)
+                : plugin.getUpgradeShopManager().getJetpackRechargeSeconds(player);
+
+        int heldSlot = player.getInventory().getHeldItemSlot();
+
+        Integer tntSlot = plugin.getRechargeManager().getTntSlot(player);
+        if (tntSlot != null && heldSlot == tntSlot && plugin.getRechargeManager().isTntOnCooldown(player)) {
+            double remaining = plugin.getRechargeManager().getRemainingTntSeconds(player);
+            player.setLevel((int) Math.ceil(remaining));
             player.setExp(plugin.getRechargeManager().getTntProgress(player, tntMax));
             return;
         }
 
-        if (isJetpackItem(item) && plugin.getRechargeManager().isJetpackOnCooldown(player)) {
-            player.setLevel(plugin.getRechargeManager().getRemainingJetpackSeconds(player));
+        Integer jetpackSlot = plugin.getRechargeManager().getJetpackSlot(player);
+        if (jetpackSlot != null && heldSlot == jetpackSlot && plugin.getRechargeManager().isJetpackOnCooldown(player)) {
+            double remaining = plugin.getRechargeManager().getRemainingJetpackSeconds(player);
+            player.setLevel((int) Math.ceil(remaining));
+            player.setExp(plugin.getRechargeManager().getJetpackProgress(player, jetpackMax));
+            return;
+        }
+
+        if (ItemFactory.isSimilarKeyItem(item, "tnt") && plugin.getRechargeManager().isTntOnCooldown(player)) {
+            double remaining = plugin.getRechargeManager().getRemainingTntSeconds(player);
+            player.setLevel((int) Math.ceil(remaining));
+            player.setExp(plugin.getRechargeManager().getTntProgress(player, tntMax));
+            return;
+        }
+
+        if (ItemFactory.isSimilarKeyItem(item, "jetpack") && plugin.getRechargeManager().isJetpackOnCooldown(player)) {
+            double remaining = plugin.getRechargeManager().getRemainingJetpackSeconds(player);
+            player.setLevel((int) Math.ceil(remaining));
             player.setExp(plugin.getRechargeManager().getJetpackProgress(player, jetpackMax));
             return;
         }
@@ -56,18 +70,12 @@ public class CooldownBarListener implements Listener {
         resetBar(player);
     }
 
-    private void resetBar(Player player) {
+    public void resetBar(Player player) {
+        if (player == null) {
+            return;
+        }
+
         player.setLevel(0);
         player.setExp(0.0F);
-    }
-
-    private boolean isTntItem(ItemStack item) {
-        return ItemFactory.isSimilarKeyItem(item, "tnt")
-                || ConfigUtil.sameDisplayName(item, MadnessPlugin.getInstance().getConfig().getString("cooldowns.tnt.name"));
-    }
-
-    private boolean isJetpackItem(ItemStack item) {
-        return ItemFactory.isSimilarKeyItem(item, "jetpack")
-                || ConfigUtil.sameDisplayName(item, MadnessPlugin.getInstance().getConfig().getString("cooldowns.jetpack.name"));
     }
 }

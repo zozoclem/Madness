@@ -33,7 +33,7 @@ public class MadnessCommand implements CommandExecutor {
                 return true;
             }
 
-            plugin.reloadPlugin();
+            plugin.reloadConfig();
             sender.sendMessage(ConfigUtil.color(plugin.getConfig().getString("messages.commands.reload", "&aMadness a été rechargé.")));
             return true;
         }

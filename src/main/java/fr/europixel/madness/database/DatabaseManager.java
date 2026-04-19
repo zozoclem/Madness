@@ -43,7 +43,7 @@ public class DatabaseManager {
             throw new SQLException("Driver MySQL introuvable", e);
         }
 
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false&autoReconnect=true";
+        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false&autoReconnect=true&characterEncoding=utf8";
         connection = DriverManager.getConnection(url, username, password);
 
         createTables();
@@ -87,11 +87,58 @@ public class DatabaseManager {
                 "PRIMARY KEY (uuid)" +
                 ");";
 
+        String eventsSql = "CREATE TABLE IF NOT EXISTS madness_events (" +
+                "id BIGINT NOT NULL AUTO_INCREMENT," +
+                "event_type VARCHAR(64) NOT NULL," +
+                "actor_uuid VARCHAR(36) NULL," +
+                "actor_name VARCHAR(16) NULL," +
+                "target_uuid VARCHAR(36) NULL," +
+                "target_name VARCHAR(16) NULL," +
+                "world_name VARCHAR(64) NULL," +
+                "cause VARCHAR(64) NULL," +
+                "coins DOUBLE NOT NULL DEFAULT 0," +
+                "xp INT NOT NULL DEFAULT 0," +
+                "streak INT NOT NULL DEFAULT 0," +
+                "details TEXT NULL," +
+                "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                "PRIMARY KEY (id)," +
+                "INDEX idx_event_type (event_type)," +
+                "INDEX idx_actor_uuid (actor_uuid)," +
+                "INDEX idx_target_uuid (target_uuid)," +
+                "INDEX idx_created_at (created_at)" +
+                ");";
+
+        String upgradeShopSql = "CREATE TABLE IF NOT EXISTS madness_upgrade_shop (" +
+                "uuid VARCHAR(36) NOT NULL," +
+                "upgrade_id VARCHAR(64) NOT NULL," +
+                "level INT NOT NULL DEFAULT 0," +
+                "PRIMARY KEY (uuid, upgrade_id)" +
+                ");";
+
+        String tntEffectsSql = "CREATE TABLE IF NOT EXISTS madness_tnt_effects (" +
+                "uuid VARCHAR(36) NOT NULL," +
+                "owned_effects TEXT NOT NULL," +
+                "selected_effect VARCHAR(64) NOT NULL," +
+                "PRIMARY KEY (uuid)" +
+                ");";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(tntEffectsSql)) {
+            statement.executeUpdate();
+        }
+
+        try (PreparedStatement statement = getConnection().prepareStatement(upgradeShopSql)) {
+            statement.executeUpdate();
+        }
+
         try (PreparedStatement statement = getConnection().prepareStatement(playerStatsSql)) {
             statement.executeUpdate();
         }
 
         try (PreparedStatement statement = getConnection().prepareStatement(blockShopSql)) {
+            statement.executeUpdate();
+        }
+
+        try (PreparedStatement statement = getConnection().prepareStatement(eventsSql)) {
             statement.executeUpdate();
         }
     }
@@ -369,6 +416,294 @@ public class DatabaseManager {
 
         try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
             statement.setString(1, block);
+            statement.setString(2, uuid);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertEvent(String eventType,
+                            String actorUuid,
+                            String actorName,
+                            String targetUuid,
+                            String targetName,
+                            String worldName,
+                            String cause,
+                            double coins,
+                            int xp,
+                            int streak,
+                            String details) throws SQLException {
+        String sql = "INSERT INTO madness_events " +
+                "(event_type, actor_uuid, actor_name, target_uuid, target_name, world_name, cause, coins, xp, streak, details) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, eventType);
+            statement.setString(2, actorUuid);
+            statement.setString(3, actorName);
+            statement.setString(4, targetUuid);
+            statement.setString(5, targetName);
+            statement.setString(6, worldName);
+            statement.setString(7, cause);
+            statement.setDouble(8, coins);
+            statement.setInt(9, xp);
+            statement.setInt(10, streak);
+            statement.setString(11, details);
+            statement.executeUpdate();
+        }
+    }
+
+    public java.util.List<String> getRecentEvents(int limit) {
+        java.util.List<String> list = new java.util.ArrayList<String>();
+
+        String sql = "SELECT event_type, actor_name, target_name, cause, coins, xp, streak, created_at " +
+                "FROM madness_events ORDER BY id DESC LIMIT ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setInt(1, limit);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String line = resultSet.getString("event_type")
+                            + " | actor=" + resultSet.getString("actor_name")
+                            + " | target=" + resultSet.getString("target_name")
+                            + " | cause=" + resultSet.getString("cause")
+                            + " | coins=" + resultSet.getDouble("coins")
+                            + " | xp=" + resultSet.getInt("xp")
+                            + " | streak=" + resultSet.getInt("streak")
+                            + " | at=" + resultSet.getString("created_at");
+
+                    list.add(line);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public java.util.List<String> getPlayerEvents(String playerName, int limit) {
+        java.util.List<String> list = new java.util.ArrayList<String>();
+
+        String sql = "SELECT event_type, actor_name, target_name, cause, coins, xp, streak, created_at " +
+                "FROM madness_events " +
+                "WHERE actor_name = ? OR target_name = ? " +
+                "ORDER BY id DESC LIMIT ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, playerName);
+            statement.setString(2, playerName);
+            statement.setInt(3, limit);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String line = resultSet.getString("event_type")
+                            + " | actor=" + resultSet.getString("actor_name")
+                            + " | target=" + resultSet.getString("target_name")
+                            + " | cause=" + resultSet.getString("cause")
+                            + " | coins=" + resultSet.getDouble("coins")
+                            + " | xp=" + resultSet.getInt("xp")
+                            + " | streak=" + resultSet.getInt("streak")
+                            + " | at=" + resultSet.getString("created_at");
+
+                    list.add(line);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public void ensureUpgradeShopPlayer(String uuid) {
+        String[] defaultUpgrades = new String[] {
+                "tnt_cooldown",
+                "jetpack_cooldown",
+                "golden_apples"
+        };
+
+        for (String upgradeId : defaultUpgrades) {
+            String select = "SELECT level FROM madness_upgrade_shop WHERE uuid = ? AND upgrade_id = ?";
+
+            try (PreparedStatement statement = getConnection().prepareStatement(select)) {
+                statement.setString(1, uuid);
+                statement.setString(2, upgradeId);
+
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (resultSet.next()) {
+                        continue;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            String insert = "INSERT INTO madness_upgrade_shop (uuid, upgrade_id, level) VALUES (?, ?, 0)";
+
+            try (PreparedStatement statement = getConnection().prepareStatement(insert)) {
+                statement.setString(1, uuid);
+                statement.setString(2, upgradeId);
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public int getUpgradeLevel(String uuid, String upgradeId) {
+        String sql = "SELECT level FROM madness_upgrade_shop WHERE uuid = ? AND upgrade_id = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, uuid);
+            statement.setString(2, upgradeId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("level");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public void setUpgradeLevel(String uuid, String upgradeId, int level) {
+        String sql = "UPDATE madness_upgrade_shop SET level = ? WHERE uuid = ? AND upgrade_id = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setInt(1, Math.max(0, level));
+            statement.setString(2, uuid);
+            statement.setString(3, upgradeId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void ensureTntEffectPlayer(String uuid, String defaultEffect) {
+        String select = "SELECT uuid FROM madness_tnt_effects WHERE uuid = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(select)) {
+            statement.setString(1, uuid);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        String insert = "INSERT INTO madness_tnt_effects (uuid, owned_effects, selected_effect) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(insert)) {
+            statement.setString(1, uuid);
+            statement.setString(2, defaultEffect.toLowerCase());
+            statement.setString(3, defaultEffect.toLowerCase());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public java.util.Set<String> getOwnedTntEffects(String uuid) {
+        java.util.Set<String> owned = new java.util.HashSet<String>();
+
+        String sql = "SELECT owned_effects FROM madness_tnt_effects WHERE uuid = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, uuid);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String raw = resultSet.getString("owned_effects");
+                    if (raw != null && !raw.trim().isEmpty()) {
+                        String[] split = raw.split(";");
+                        for (String value : split) {
+                            if (value != null && !value.trim().isEmpty()) {
+                                owned.add(value.toLowerCase());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        if (!owned.contains("classic")) {
+            owned.add("classic");
+        }
+
+        return owned;
+    }
+
+    public void addOwnedTntEffect(String uuid, String effectId) {
+        java.util.Set<String> owned = getOwnedTntEffects(uuid);
+        effectId = effectId.toLowerCase();
+
+        if (owned.contains(effectId)) {
+            return;
+        }
+
+        owned.add(effectId);
+
+        StringBuilder builder = new StringBuilder();
+        for (String value : owned) {
+            if (value == null || value.trim().isEmpty()) {
+                continue;
+            }
+
+            if (builder.length() > 0) {
+                builder.append(";");
+            }
+
+            builder.append(value.toLowerCase());
+        }
+
+        String sql = "UPDATE madness_tnt_effects SET owned_effects = ? WHERE uuid = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, builder.toString());
+            statement.setString(2, uuid);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getSelectedTntEffect(String uuid) {
+        String sql = "SELECT selected_effect FROM madness_tnt_effects WHERE uuid = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, uuid);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String selected = resultSet.getString("selected_effect");
+                    return selected == null ? "classic" : selected.toLowerCase();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return "classic";
+    }
+
+    public void setSelectedTntEffect(String uuid, String effectId) {
+        String sql = "UPDATE madness_tnt_effects SET selected_effect = ? WHERE uuid = ?";
+
+        try (PreparedStatement statement = getConnection().prepareStatement(sql)) {
+            statement.setString(1, effectId.toLowerCase());
             statement.setString(2, uuid);
             statement.executeUpdate();
         } catch (SQLException e) {

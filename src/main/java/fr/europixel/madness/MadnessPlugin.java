@@ -9,20 +9,50 @@ import fr.europixel.madness.command.SetSpawnCommand;
 import fr.europixel.madness.database.DatabaseManager;
 import fr.europixel.madness.economy.CoinRewardManager;
 import fr.europixel.madness.economy.VaultEconomyHook;
-import fr.europixel.madness.manager.*;
-import fr.europixel.madness.listener.global.*;
+import fr.europixel.madness.listener.arena.ArenaBoundaryListener;
+import fr.europixel.madness.listener.arena.ArenaInventoryLockListener;
+import fr.europixel.madness.listener.arena.BlockFragileProtectionListener;
+import fr.europixel.madness.listener.arena.BlockPlaceBreakListener;
+import fr.europixel.madness.listener.arena.InstantTntListener;
+import fr.europixel.madness.listener.arena.JetpackListener;
+import fr.europixel.madness.listener.arena.KillListener;
+import fr.europixel.madness.listener.arena.LastDamagerListener;
+import fr.europixel.madness.listener.arena.LethalDamageListener;
+import fr.europixel.madness.listener.arena.VoidDeathListener;
+import fr.europixel.madness.listener.global.DamageProtectionListener;
+import fr.europixel.madness.listener.global.FoodListener;
+import fr.europixel.madness.listener.global.InteractionBlockerListener;
+import fr.europixel.madness.listener.global.NoDropListener;
+import fr.europixel.madness.listener.global.NoDurabilityLossListener;
+import fr.europixel.madness.listener.global.WeatherListener;
 import fr.europixel.madness.listener.kit.EditKitListener;
 import fr.europixel.madness.listener.lobby.LobbyInteractListener;
 import fr.europixel.madness.listener.lobby.LobbyProtectionListener;
 import fr.europixel.madness.listener.lobby.PlayerJoinRespawnListener;
-import fr.europixel.madness.listener.arena.*;
+import fr.europixel.madness.listener.global.WorldProtectionListener;
+import fr.europixel.madness.manager.ArenaEliminationManager;
+import fr.europixel.madness.manager.ArenaManager;
+import fr.europixel.madness.manager.BlockDecayManager;
+import fr.europixel.madness.manager.EditKitManager;
+import fr.europixel.madness.manager.EventHistoryManager;
+import fr.europixel.madness.manager.ItemRechargeManager;
+import fr.europixel.madness.manager.KitManager;
+import fr.europixel.madness.manager.LastDamagerManager;
+import fr.europixel.madness.manager.LeaderboardManager;
+import fr.europixel.madness.manager.LevelManager;
+import fr.europixel.madness.manager.LobbyManager;
+import fr.europixel.madness.manager.PlayerModeManager;
+import fr.europixel.madness.manager.PlayerStatsManager;
 import fr.europixel.madness.model.PlayerStats;
 import fr.europixel.madness.placeholder.MadnessExpansion;
 import fr.europixel.madness.shop.BlockShopListener;
 import fr.europixel.madness.shop.BlockShopManager;
+import fr.europixel.madness.shop.UpgradeShopManager;
 import fr.europixel.madness.sidebar.MadnessSidebarManager;
 import fr.europixel.madness.sidebar.SidebarConfig;
 import fr.europixel.madness.task.CooldownBarTask;
+import fr.europixel.madness.shop.TntEffectManager;
+import fr.europixel.madness.shop.TntEffectShopManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,14 +74,29 @@ public class MadnessPlugin extends JavaPlugin {
     private SidebarConfig sidebarConfig;
     private EditKitManager editKitManager;
     private LevelManager levelManager;
+    private EventHistoryManager eventHistoryManager;
+    private ArenaEliminationManager arenaEliminationManager;
+    private LastDamagerManager lastDamagerManager;
+    private WorldProtectionListener worldProtectionListener;
+    private TntEffectManager tntEffectManager;
+    private TntEffectShopManager tntEffectShopManager;
 
     private VaultEconomyHook vaultEconomyHook;
     private CoinRewardManager coinRewardManager;
     private BlockShopManager blockShopManager;
+    private UpgradeShopManager upgradeShopManager;
     private VaultChatHook vaultChatHook;
 
     public static MadnessPlugin getInstance() {
         return instance;
+    }
+
+    public WorldProtectionListener getWorldProtectionListener() {
+        return worldProtectionListener;
+    }
+
+    public LeaderboardManager getLeaderboardManager() {
+        return leaderboardManager;
     }
 
     public KitManager getKitManager() {
@@ -98,8 +143,20 @@ public class MadnessPlugin extends JavaPlugin {
         return editKitManager;
     }
 
-    public LeaderboardManager getLeaderboardManager() {
-        return leaderboardManager;
+    public LevelManager getLevelManager() {
+        return levelManager;
+    }
+
+    public EventHistoryManager getEventHistoryManager() {
+        return eventHistoryManager;
+    }
+
+    public ArenaEliminationManager getArenaEliminationManager() {
+        return arenaEliminationManager;
+    }
+
+    public LastDamagerManager getLastDamagerManager() {
+        return lastDamagerManager;
     }
 
     public VaultEconomyHook getVaultEconomyHook() {
@@ -114,12 +171,20 @@ public class MadnessPlugin extends JavaPlugin {
         return blockShopManager;
     }
 
+    public UpgradeShopManager getUpgradeShopManager() {
+        return upgradeShopManager;
+    }
+
     public VaultChatHook getVaultChatHook() {
         return vaultChatHook;
     }
 
-    public LevelManager getLevelManager() {
-        return levelManager;
+    public TntEffectManager getTntEffectManager() {
+        return tntEffectManager;
+    }
+
+    public TntEffectShopManager getTntEffectShopManager() {
+        return tntEffectShopManager;
     }
 
     @Override
@@ -151,11 +216,17 @@ public class MadnessPlugin extends JavaPlugin {
         this.leaderboardManager = new LeaderboardManager(this);
         this.leaderboardManager.start();
         this.levelManager = new LevelManager(this);
+        this.eventHistoryManager = new EventHistoryManager(this);
+        this.arenaEliminationManager = new ArenaEliminationManager(this);
+        this.lastDamagerManager = new LastDamagerManager(10_000L);
 
         this.vaultEconomyHook = new VaultEconomyHook(this);
         this.vaultEconomyHook.setup();
         this.coinRewardManager = new CoinRewardManager(this);
         this.blockShopManager = new BlockShopManager(this);
+        this.upgradeShopManager = new UpgradeShopManager(this);
+        this.tntEffectManager = new TntEffectManager(this);
+        this.tntEffectShopManager = new TntEffectShopManager(this);
 
         this.vaultChatHook = new VaultChatHook(this);
         this.vaultChatHook.setup();
@@ -167,14 +238,19 @@ public class MadnessPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new DamageProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerJoinRespawnListener(this), this);
         Bukkit.getPluginManager().registerEvents(new BlockPlaceBreakListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlockFragileProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new FoodListener(), this);
         Bukkit.getPluginManager().registerEvents(new NoDropListener(), this);
         Bukkit.getPluginManager().registerEvents(new NoDurabilityLossListener(), this);
         Bukkit.getPluginManager().registerEvents(new KillListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new LastDamagerListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LobbyInteractListener(this), this);
         Bukkit.getPluginManager().registerEvents(new LobbyProtectionListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new InteractionBlockerListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new WorldProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(cooldownBarListener, this);
         Bukkit.getPluginManager().registerEvents(new VoidDeathListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new LethalDamageListener(this), this);
         Bukkit.getPluginManager().registerEvents(new EditKitListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArenaInventoryLockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArenaBoundaryListener(this), this);
@@ -195,12 +271,27 @@ public class MadnessPlugin extends JavaPlugin {
         if (getCommand("madness") != null) {
             getCommand("madness").setExecutor(new MadnessCommand(this));
         }
+
         if (getCommand("setspawn") != null) {
             getCommand("setspawn").setExecutor(new SetSpawnCommand(this));
         }
+
         if (getCommand("setarenaspawn") != null) {
             getCommand("setarenaspawn").setExecutor(new SetArenaSpawnCommand(this));
         }
+
+        if (worldProtectionListener != null) {
+            worldProtectionListener.applyAllWorldRules();
+        }
+
+        Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
+            @Override
+            public void run() {
+                if (worldProtectionListener != null) {
+                    worldProtectionListener.applyAllWorldRules();
+                }
+            }
+        }, 20L, 200L);
 
         getLogger().info("Madness active !");
     }
@@ -232,6 +323,10 @@ public class MadnessPlugin extends JavaPlugin {
             }
         }
 
+        if (lastDamagerManager != null) {
+            lastDamagerManager.clearAll();
+        }
+
         if (leaderboardManager != null) {
             leaderboardManager.stop();
         }
@@ -245,13 +340,19 @@ public class MadnessPlugin extends JavaPlugin {
 
     public void reloadPlugin() {
         reloadConfig();
-        sidebarConfig.reload();
+
+        if (sidebarConfig != null) {
+            sidebarConfig.reload();
+        }
 
         this.lobbyManager = new LobbyManager(this);
         this.arenaManager = new ArenaManager(this);
         this.rechargeManager = new ItemRechargeManager(this);
         this.kitManager = new KitManager(this);
         this.levelManager = new LevelManager(this);
+        this.eventHistoryManager = new EventHistoryManager(this);
+        this.arenaEliminationManager = new ArenaEliminationManager(this);
+        this.lastDamagerManager = new LastDamagerManager(10_000L);
 
         if (this.blockDecayManager != null) {
             this.blockDecayManager.stop();
@@ -264,6 +365,7 @@ public class MadnessPlugin extends JavaPlugin {
         this.vaultEconomyHook.setup();
         this.coinRewardManager = new CoinRewardManager(this);
         this.blockShopManager = new BlockShopManager(this);
+        this.upgradeShopManager = new UpgradeShopManager(this);
 
         this.vaultChatHook = new VaultChatHook(this);
         this.vaultChatHook.setup();

@@ -59,6 +59,23 @@ public class KitManager {
             hotbar = plugin.getBlockShopManager().applySelectedBlock(player, hotbar);
         }
 
+        if (plugin.getUpgradeShopManager() != null) {
+            int bonus = plugin.getUpgradeShopManager().getGoldenAppleBonus(player);
+            if (bonus > 0) {
+                for (int i = 0; i < hotbar.length; i++) {
+                    ItemStack item = hotbar[i];
+                    if (item == null) {
+                        continue;
+                    }
+
+                    if (item.getType() == Material.GOLDEN_APPLE) {
+                        item.setAmount(Math.min(64, item.getAmount() + bonus));
+                        break;
+                    }
+                }
+            }
+        }
+
         return hotbar;
     }
 

@@ -164,13 +164,12 @@ public class MadnessSidebarManager {
     }
 
     private List<String> buildCooldownLines(Player player, String section) {
-        List<String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<String>();
 
-        int tnt = plugin.getRechargeManager() == null ? 0 : plugin.getRechargeManager().getRemainingTntSeconds(player);
-        int jetpack = plugin.getRechargeManager() == null ? 0 : plugin.getRechargeManager().getRemainingJetpackSeconds(player);
+        double tnt = plugin.getRechargeManager() == null ? 0.0D : plugin.getRechargeManager().getRemainingTntSeconds(player);
+        double jetpack = plugin.getRechargeManager() == null ? 0.0D : plugin.getRechargeManager().getRemainingJetpackSeconds(player);
 
-        // ❌ Aucun cooldown → RIEN DU TOUT
-        if (tnt <= 0 && jetpack <= 0) {
+        if (tnt <= 0.0D && jetpack <= 0.0D) {
             return lines;
         }
 
@@ -178,22 +177,24 @@ public class MadnessSidebarManager {
         String tntLine = plugin.getSidebarConfig().getRawString(section + ".tnt-line", "");
         String jetpackLine = plugin.getSidebarConfig().getRawString(section + ".jetpack-line", "");
 
-        // ✅ ESPACE AVANT (UNIQUEMENT SI cooldown actif)
         lines.add(apply("&7 ", player));
 
-        // Header
         if (header != null && !header.isEmpty()) {
             lines.add(apply(header, player));
         }
 
-        // TNT
-        if (tnt > 0 && tntLine != null && !tntLine.isEmpty()) {
-            lines.add(apply(tntLine, player));
+        if (tnt > 0.0D && tntLine != null && !tntLine.isEmpty()) {
+            lines.add(apply(
+                    tntLine.replace("%tnt%", formatCooldown(tnt)),
+                    player
+            ));
         }
 
-        // Jetpack
-        if (jetpack > 0 && jetpackLine != null && !jetpackLine.isEmpty()) {
-            lines.add(apply(jetpackLine, player));
+        if (jetpack > 0.0D && jetpackLine != null && !jetpackLine.isEmpty()) {
+            lines.add(apply(
+                    jetpackLine.replace("%jetpack%", formatCooldown(jetpack)),
+                    player
+            ));
         }
 
         return lines;
@@ -224,5 +225,13 @@ public class MadnessSidebarManager {
             return "";
         }
         return text.length() <= maxLength ? text : text.substring(0, maxLength);
+    }
+
+    private String formatCooldown(double seconds) {
+        if (seconds <= 0.0D) {
+            return "0";
+        }
+
+        return String.valueOf((int) Math.ceil(seconds));
     }
 }

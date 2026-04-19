@@ -1,9 +1,8 @@
 package fr.europixel.madness.item;
 
-import fr.europixel.madness.utils.ConfigUtil;
 import fr.europixel.madness.MadnessPlugin;
+import fr.europixel.madness.utils.ConfigUtil;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -14,15 +13,32 @@ public class CooldownItemFactory {
 
     public static ItemStack createBarrier(String path, int seconds) {
         MadnessPlugin plugin = MadnessPlugin.getInstance();
-        ConfigurationSection section = plugin == null ? null : plugin.getConfig().getConfigurationSection(path);
 
-        ItemStack item = ConfigItemFactory.fromSection(section, Material.BARRIER, 1);
+        Material material = ConfigUtil.getMaterial(
+                plugin.getConfig().getString(path + ".material"),
+                Material.BARRIER
+        );
+
+        int amount = plugin.getConfig().getInt(path + ".amount", 1);
+
+        ItemStack item = new ItemStack(material, Math.max(1, amount));
         ItemMeta meta = item.getItemMeta();
 
         if (meta != null) {
-            List<String> lore = meta.hasLore() ? new ArrayList<String>(meta.getLore()) : new ArrayList<String>();
-            String template = section != null ? section.getString("remaining-line", "&7Temps restant: &c%seconds%s") : "&7Temps restant: &c%seconds%s";
-            lore.add(ConfigUtil.color(template.replace("%seconds%", String.valueOf(seconds))));
+            String name = plugin.getConfig().getString(path + ".name", "&cRecharging");
+            meta.setDisplayName(ConfigUtil.color(name));
+
+            List<String> lore = new ArrayList<String>();
+            List<String> baseLore = plugin.getConfig().getStringList(path + ".lore");
+            if (baseLore != null) {
+                for (String line : baseLore) {
+                    lore.add(ConfigUtil.color(line));
+                }
+            }
+
+            String remainingLine = plugin.getConfig().getString(path + ".remaining-line", "&7Time left: &c%seconds%s");
+            lore.add(ConfigUtil.color(remainingLine.replace("%seconds%", String.valueOf(seconds))));
+
             meta.setLore(lore);
             item.setItemMeta(meta);
         }

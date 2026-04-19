@@ -1,6 +1,6 @@
 package fr.europixel.madness.listener.lobby;
 
-import fr.europixel.madness.shop.BlockShopMenu;
+import fr.europixel.madness.shop.ShopCategoryMenu;
 import fr.europixel.madness.kit.EditKitMenu;
 import fr.europixel.madness.item.ItemFactory;
 import fr.europixel.madness.MadnessPlugin;
@@ -57,7 +57,7 @@ public class LobbyInteractListener implements Listener {
 
         if (ItemFactory.isSimilarKeyItem(item, "shop")) {
             event.setCancelled(true);
-            BlockShopMenu.open(plugin, player);
+            ShopCategoryMenu.open(plugin, player);
         }
     }
 }
